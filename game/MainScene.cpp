@@ -40,14 +40,13 @@ std::map<std::string, int> timerLock;
 class Ball : public ObjectNode {
 public:
     glm::vec3 velocity; // 속도 벡터
-    float lifeTime;     // 수명 (너무 멀리 가면 삭제하기 위함)
+    float lifeTime;     
 
     Ball(glm::vec3 pos, glm::vec3 dir) : ObjectNode("Ball", pos, dir) {
         float speed = 10.0f; // 공의 이동 속도
         velocity = glm::normalize(dir) * speed;
-        lifeTime = 200.0f;   // 200 프레임 뒤에 사라짐
+        lifeTime = 200.0f;  
 
-        // 1. 공의 모델
         addChild(std::make_shared<ModelNode>("rice", glm::vec3(0.0), glm::vec3(0.0), 5.0f, glm::vec3(1.0, 0.0, 0.0), ""));
     }
 
