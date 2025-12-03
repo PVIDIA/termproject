@@ -36,25 +36,14 @@ std::map<std::string, int> timerLock;
 
 // __________ MainScene __________
 
-MainScene::MainScene() : SceneNode("MainScene") {
-    //portal
-    portal1_position = glm::vec3(500, 200.0, 0.0);
-    portal1_direction = glm::vec3(-1.0, 0.0, 0.0);
-    portal1_up = glm::vec3(0.0, 1.0, 0.0);
-    
-    portal2_position = glm::vec3(0.0, 200.0, 500.0);
-    portal2_direction = glm::vec3(0.0, 0.0, -1.0);
-    portal2_up = glm::vec3(0.0, 1.0, 0.0);
-
-    p1_camera = std::make_shared<PersCameraNode>("p1", glm::vec3(300.0, 200.0f, 300.0), glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0, 1.0, 00), 120.0f, 1.0f, 3000.0f);
-    p2_camera = std::make_shared<PersCameraNode>("p2", glm::vec3(300.0, 200.0f, 300.0), glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0, 1.0, 00), 120.0f, 1.0f, 3000.0f);
+MainScene::MainScene() : SceneNode("MainScene"), PortalTest() {
 
     std::shared_ptr<Node> node;
 
     //__________ Camera ___________
     cameras.push_back(std::make_shared<PersCameraNode>("Camera1", glm::vec3(-300.0, 200.0f, -300.0), glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0, 1.0, 00), 120.0f, 1.0f, 3000.0f));
-    cameras.push_back(p1_camera);
-    cameras.push_back(p2_camera);
+    cameras.push_back(portalTest.p1_camera);
+    cameras.push_back(portalTest.p2_camera);
     addChild(cameras[0]); //Camera push : WorldPersCamera(0)
     current_camera_num = 0;
     main_camera = cameras[current_camera_num];
@@ -67,13 +56,28 @@ MainScene::MainScene() : SceneNode("MainScene") {
     addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(-500.0, 500.0, 0.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(0.0, 0.0, 1.0)), 500.0, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_industrial"));
     addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0, 500.0, -500.0), glm::angleAxis(float(glm::radians(90.0)), glm::vec3(1.0, 0.0, 0.0)), 500.0, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_industrial"));
     addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0, 500.0, 500.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(1.0, 0.0, 0.0)), 500.0, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_industrial"));
+    
+    addChild(std::make_shared<ModelNode>("portal", glm::vec3(200.0, 1.0, 0.0), glm::angleAxis(0.0, glm::vec3(1.0, 0.0, 0.0)), 100.0, glm::vec3(0.0, 1.0, 0.0), "", ""));
+    addChild(std::make_shared<ModelNode>("portal", glm::vec3(-200.0, 1.0, 0.0), glm::angleAxis(0.0, glm::vec3(1.0, 0.0, 0.0)), 100.0, glm::vec3(0.0, 1.0, 0.0), "", ""));
 
     std::cout << "-- portal1 --" << std::endl;
     collectCollisions();
 }
 void MainScene::render() {
+    auto temp = main_camera;
+    glBindFramebuffer(GL_FRAMEBUFFER, portalTest.p1_FBO);
+    //glViewport(0, 0, texWidth, texHeight);
+    main_camera = cameras[1];
     SceneNode::render();
-}   
+
+    glBindFramebuffer(GL_FRAMEBUFFER, portalTest.p2_FBO);
+    main_camera = cameras[2];
+    SceneNode::render();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    main_camera = temp;
+    SceneNode::render();
+}
 
 float qwerasdf = 0.0f;
 void MainScene::update() {
@@ -82,50 +86,7 @@ void MainScene::update() {
     qwerasdf += 5.0f;
     qwerasdf = qwerasdf > 500.0 ? qwerasdf-500.0 : qwerasdf;
     
-    //protal
-    //portal local world -> 
-    glm::mat4 portal1World = glm::mat4(
-                                        glm::vec4(glm::cross(portal1_up, portal1_direction), 0.0f),
-                                        glm::vec4(portal1_up, 0.0f),
-                                        glm::vec4(portal1_direction, 0.0f),
-                                        glm::vec4(portal1_position, 1.0f)
-                                    );
-    //portal1World = glm::transpose(portal1World);
-    glm::mat4 portal1World_inverse = glm::inverse(portal1World);
-    //portal local world -> 
-    glm::mat4 portal2World = glm::mat4(
-                                        glm::vec4(glm::cross(portal2_up, portal2_direction), 0.0f),
-                                        glm::vec4(portal2_up, 0.0f),
-                                        glm::vec4(portal2_direction, 0.0f),
-                                        glm::vec4(portal2_position, 1.0f)
-                                    );
-    //portal2World = glm::transpose(portal2World);
-    glm::mat4 portal2World_inverse = glm::inverse(portal2World);
-    glm::mat4 flip180 = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0,1,0)); //y축 180 회전
-
-    p1_camera->position = glm::vec3(portal2World * flip180 * portal1World_inverse * glm::vec4(cameras[0]->position, 1.0));
-    p2_camera->position = glm::vec3(portal1World * flip180 * portal2World_inverse * glm::vec4(cameras[0]->position, 1.0));
-
-    p1_camera->direction = glm::normalize(portal2_position - p1_camera->position);
-    p2_camera->direction = glm::normalize(portal1_position - p2_camera->position);
-
-    p1_camera->up = glm::vec3(0.0, 1.0, 0.0);
-    p2_camera->up = glm::vec3(0.0, 1.0, 0.0);
-
-    std::cout << "-- portal1 --" << std::endl;
-    std::cout << "position : (" << portal1_position.x << ", " << portal1_position.y << ", "  << portal1_position.z << ")" << std::endl;
-    std::cout << "-------------" << std::endl;
-    std::cout << "-- portal2 --" << std::endl;
-    std::cout << "position : (" << portal2_position.x << ", " << portal2_position.y << ", "  << portal2_position.z << ")" << std::endl;
-    std::cout << "-------------" << std::endl;
-    std::cout << "-- p1_camera --" << std::endl;
-    std::cout << "position : (" << p1_camera->position.x << ", " << p1_camera->position.y << ", "  << p1_camera->position.z << ")" << std::endl;
-    std::cout << "direciton : (" << p1_camera->direction.x << ", " << p1_camera->direction.y << ", "  << p1_camera->direction.z << ")" << std::endl;
-    std::cout << "-------------" << std::endl;
-    std::cout << "-- p2_camera --" << std::endl;
-    std::cout << "position : (" << p2_camera->position.x << ", " << p2_camera->position.y << ", "  << p2_camera->position.z << ")" << std::endl;
-    std::cout << "direciton : (" << p2_camera->direction.x << ", " << p2_camera->direction.y << ", "  << p2_camera->direction.z << ")" << std::endl;
-    std::cout << "-------------" << std::endl;
+    portalTest.update(cameras[0]->position);
     
     glEnable(GL_CLIP_DISTANCE0);
     if(main_camera == cameras[0]) {
@@ -240,4 +201,92 @@ void Test::update() {
 }
 void Test::render() {
     ObjectNode::render();
+}
+
+PortalTest::PortalTest() : ObjectNode("PortalTest", glm::vec3(0.0), glm::vec3(0.0, 0.0, 1.0)) {
+    //portal
+    portal1_position = glm::vec3(500, 200.0, 0.0);
+    portal1_direction = glm::vec3(-1.0, 0.0, 0.0);
+    portal1_up = glm::vec3(0.0, 1.0, 0.0);
+    
+    portal2_position = glm::vec3(0.0, 200.0, 500.0);
+    portal2_direction = glm::vec3(0.0, 0.0, -1.0);
+    portal2_up = glm::vec3(0.0, 1.0, 0.0);
+
+    p1_camera = std::make_shared<PersCameraNode>("p1", glm::vec3(300.0, 200.0f, 300.0), glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0, 1.0, 00), 120.0f, 1.0f, 3000.0f);
+    p2_camera = std::make_shared<PersCameraNode>("p2", glm::vec3(300.0, 200.0f, 300.0), glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0, 1.0, 00), 120.0f, 1.0f, 3000.0f);
+
+    glGenTextures(1, &p1_texture);
+    glBindTexture(GL_TEXTURE_2D, p1_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 100, 100, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    
+    glGenTextures(1, &p2_texture);
+    glBindTexture(GL_TEXTURE_2D, p2_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 100, 100, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    
+    glGenFramebuffers(1, &p1_FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, p1_FBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, p1_texture, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    glGenFramebuffers(1, &p2_FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, p2_FBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, p2_texture, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void PortalTest::update(const glm::vec3& viewer_position) {
+    //protal
+    //portal local world -> 
+    glm::mat4 portal1World = glm::mat4(
+                                        glm::vec4(glm::cross(portal1_up, portal1_direction), 0.0f),
+                                        glm::vec4(portal1_up, 0.0f),
+                                        glm::vec4(portal1_direction, 0.0f),
+                                        glm::vec4(portal1_position, 1.0f)
+                                    );
+    //portal1World = glm::transpose(portal1World);
+    glm::mat4 portal1World_inverse = glm::inverse(portal1World);
+    //portal local world -> 
+    glm::mat4 portal2World = glm::mat4(
+                                        glm::vec4(glm::cross(portal2_up, portal2_direction), 0.0f),
+                                        glm::vec4(portal2_up, 0.0f),
+                                        glm::vec4(portal2_direction, 0.0f),
+                                        glm::vec4(portal2_position, 1.0f)
+                                    );
+    //portal2World = glm::transpose(portal2World);
+    glm::mat4 portal2World_inverse = glm::inverse(portal2World);
+    glm::mat4 flip180 = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0,1,0)); //y축 180 회전
+
+    p1_camera->position = glm::vec3(portal2World * flip180 * portal1World_inverse * glm::vec4(viewer_position, 1.0));
+    p2_camera->position = glm::vec3(portal1World * flip180 * portal2World_inverse * glm::vec4(viewer_position, 1.0));
+
+    p1_camera->direction = glm::normalize(portal2_position - p1_camera->position);
+    p2_camera->direction = glm::normalize(portal1_position - p2_camera->position);
+
+    p1_camera->up = glm::vec3(0.0, 1.0, 0.0);
+    p2_camera->up = glm::vec3(0.0, 1.0, 0.0);
+
+    std::cout << "-- portal1 --" << std::endl;
+    std::cout << "position : (" << portal1_position.x << ", " << portal1_position.y << ", "  << portal1_position.z << ")" << std::endl;
+    std::cout << "-------------" << std::endl;
+    std::cout << "-- portal2 --" << std::endl;
+    std::cout << "position : (" << portal2_position.x << ", " << portal2_position.y << ", "  << portal2_position.z << ")" << std::endl;
+    std::cout << "-------------" << std::endl;
+    std::cout << "-- p1_camera --" << std::endl;
+    std::cout << "position : (" << p1_camera->position.x << ", " << p1_camera->position.y << ", "  << p1_camera->position.z << ")" << std::endl;
+    std::cout << "direciton : (" << p1_camera->direction.x << ", " << p1_camera->direction.y << ", "  << p1_camera->direction.z << ")" << std::endl;
+    std::cout << "-------------" << std::endl;
+    std::cout << "-- p2_camera --" << std::endl;
+    std::cout << "position : (" << p2_camera->position.x << ", " << p2_camera->position.y << ", "  << p2_camera->position.z << ")" << std::endl;
+    std::cout << "direciton : (" << p2_camera->direction.x << ", " << p2_camera->direction.y << ", "  << p2_camera->direction.z << ")" << std::endl;
+    std::cout << "-------------" << std::endl;
+}
+void PortalTest::render() {
+
 }
