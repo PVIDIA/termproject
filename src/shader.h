@@ -46,9 +46,9 @@ const char *fragmentShaderSource = "#version 330 core\n"
     "   vec3 lightDir = normalize(pointLightPos-FragPos);\n"
     "   vec3 cameraDir = normalize(cameraPos-FragPos);\n"
     "   vec3 h = normalize(lightDir+cameraDir);\n"
-    "   vec3 n = normalize(Normal + normalize(texture(texture2, TexCoord).rgb));\n"
+    "   vec3 n = normalize(Normal);\n"
     "   float l = max(dot(n, h), 0.1);\n"
-    "   l = 0.7;\n"
+    "   l = dot(n, normalize(2*n+texture(texture2, TexCoord).rgb));\n"
     "   FragColor = l*mix(texture(texture2, TexCoord), texture(texture1, TexCoord), 1.0);\n"
     "}\n\0";
 

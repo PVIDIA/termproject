@@ -72,9 +72,10 @@ public:
     float fovy;
     float zNear;
     float zFar;
+    float aspect;
 
-    PersCameraNode(const std::string& n, const glm::vec3& pos, const glm::vec3& dir, const glm::vec3& up, float f, float zN, float zF)
-                                : CameraNode(n, pos, dir, up), fovy(f), zNear(zN), zFar(zF) {}
+    PersCameraNode(const std::string& n, const glm::vec3& pos, const glm::vec3& dir, const glm::vec3& up, float f, float zN, float zF, float as)
+                                : CameraNode(n, pos, dir, up), fovy(f), zNear(zN), zFar(zF), aspect(as) {}
 
     std::string getType() const { return type; } 
     virtual void update();
@@ -161,6 +162,7 @@ public:
     ModelNode(const std::string& n, const glm::vec3& pos, const glm::quat& q, float s, const glm::vec3& c, const std::string& t="", const std::string& nt="");
     ModelNode(const std::string& n, const glm::vec3& pos, const glm::vec3& dir, float s, const glm::vec4& c, const std::string& t="", const std::string& nt="");
     ModelNode(const std::string& n, const glm::vec3& pos, const glm::vec3& dir, float s, const glm::vec3& c, const std::string& t="", const std::string& nt="");
+    ModelNode(const std::string& n, const glm::vec3& pos, const glm::quat& q, float s, const glm::vec3& c, const std::string& t, GLuint vbo);
 
     std::string getType() const { return type; } 
     void update();

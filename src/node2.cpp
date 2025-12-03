@@ -191,7 +191,7 @@ void killHelp(Node* node) {
 void SceneNode::kill() {
     scene_node_count = 0;
     killHelp(this);
-    std::cout << "scene_node_count : " << scene_node_count << std::endl;
+    //std::cout << "scene_node_count : " << scene_node_count << std::endl;
     //std::cout << "scnen chilred count : " << children.size() << std::endl;
 }
 
@@ -253,7 +253,8 @@ void PersCameraNode::render() {
 
 void PersCameraNode::setup() {
     //Projection은 바로 적용
-    projection_matrix = glm::perspective(fovy, 500.0f/750.0f, zNear, zFar);
+    //projection_matrix = glm::perspective(fovy, 500.0f/750.0f, zNear, zFar);
+    projection_matrix = glm::perspective(fovy, aspect, zNear, zFar);
 
     glm::mat4 model_transformation = transformation;
     glm::mat3 model_rotation = glm::mat3(model_transformation);
@@ -344,6 +345,13 @@ ModelNode::ModelNode(const std::string& n, const glm::vec3& pos, const glm::vec3
 ModelNode::ModelNode(const std::string& n, const glm::vec3& pos, const glm::vec3& dir, float s, const glm::vec3& c, const std::string& t, const std::string& nt)
             : Node(n, pos, dir_to_quat(dir)), scale(s), color(glm::vec4(c, 1.0)) {
     modelManager.loadModel(n, t, nt);
+}
+
+ModelNode::ModelNode(const std::string& n, const glm::vec3& pos, const glm::quat& q, float s, const glm::vec3& c, const std::string& t, GLuint tt)
+            : Node(n, pos, q), scale(s), color(glm::vec4(c, 1.0)) {
+    modelManager.loadModel(n, "", "");
+    modelManager.at(n).texture = t;
+    modelManager.textures[t] = tt;
 }
 
 void ModelNode::update() {

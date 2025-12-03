@@ -36,12 +36,12 @@ std::map<std::string, int> timerLock;
 
 // __________ MainScene __________
 
-MainScene::MainScene() : SceneNode("MainScene"), PortalTest() {
+MainScene::MainScene() : SceneNode("MainScene"), portalTest() {
 
     std::shared_ptr<Node> node;
 
     //__________ Camera ___________
-    cameras.push_back(std::make_shared<PersCameraNode>("Camera1", glm::vec3(-300.0, 200.0f, -300.0), glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0, 1.0, 00), 120.0f, 1.0f, 3000.0f));
+    cameras.push_back(std::make_shared<PersCameraNode>("Camera1", glm::vec3(-300.0, 200.0f, -300.0), glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0, 1.0, 00), 120.0f, 1.0f, 3000.0f, 1.0f));
     cameras.push_back(portalTest.p1_camera);
     cameras.push_back(portalTest.p2_camera);
     addChild(cameras[0]); //Camera push : WorldPersCamera(0)
@@ -51,32 +51,92 @@ MainScene::MainScene() : SceneNode("MainScene"), PortalTest() {
     node = std::make_shared<Test>();
     addChild(node); node = nullptr;
 
-    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0), glm::angleAxis(float(glm::radians(0.0)), glm::vec3(0.0, 1.0, 0.0)), 500.0, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_industrial"));
-    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(500.0, 500.0, 0.0), glm::angleAxis(float(glm::radians(90.0)), glm::vec3(0.0, 0.0, 1.0)), 500.0, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_industrial"));
-    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(-500.0, 500.0, 0.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(0.0, 0.0, 1.0)), 500.0, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_industrial"));
-    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0, 500.0, -500.0), glm::angleAxis(float(glm::radians(90.0)), glm::vec3(1.0, 0.0, 0.0)), 500.0, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_industrial"));
-    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0, 500.0, 500.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(1.0, 0.0, 0.0)), 500.0, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_industrial"));
+    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0), glm::angleAxis(float(glm::radians(0.0)), glm::vec3(0.0, 1.0, 0.0)), 500.0f, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_cobble"));
+    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(500.0, 500.0, 0.0), glm::angleAxis(float(glm::radians(90.0)), glm::vec3(0.0, 0.0, 1.0)), 500.0f, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_cobble"));
+    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(-500.0, 500.0, 0.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(0.0, 0.0, 1.0)), 500.0f, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_cobble"));
+    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0, 500.0, -500.0), glm::angleAxis(float(glm::radians(90.0)), glm::vec3(1.0, 0.0, 0.0)), 500.0f, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_cobble"));
+    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0, 500.0, 500.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(1.0, 0.0, 0.0)), 500.0f, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_cobble"));
     
-    addChild(std::make_shared<ModelNode>("portal", glm::vec3(200.0, 1.0, 0.0), glm::angleAxis(0.0, glm::vec3(1.0, 0.0, 0.0)), 100.0, glm::vec3(0.0, 1.0, 0.0), "", ""));
-    addChild(std::make_shared<ModelNode>("portal", glm::vec3(-200.0, 1.0, 0.0), glm::angleAxis(0.0, glm::vec3(1.0, 0.0, 0.0)), 100.0, glm::vec3(0.0, 1.0, 0.0), "", ""));
+    std::cout << "portalTest texture : " << portalTest.p1_texture << ", " << portalTest.p2_texture<< std::endl;
+    addChild(std::make_shared<ModelNode>("portal1", glm::vec3(499.0, 200.0, 0.0), glm::angleAxis(float(glm::radians(90.0)), glm::vec3(0.0, 1.0, 0.0))*glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(1.0, 0.0, 0.0)), 100.0f, glm::vec3(0.0, 1.0, 0.0), "p1_texture", portalTest.p1_texture));
+    addChild(std::make_shared<ModelNode>("portal2", glm::vec3(0.0, 200.0, 499.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(1.0, 0.0, 0.0)), 100.0f, glm::vec3(0.0, 1.0, 0.0), "p2_texture", portalTest.p2_texture));
 
     std::cout << "-- portal1 --" << std::endl;
     collectCollisions();
 }
 void MainScene::render() {
     auto temp = main_camera;
+    glm::vec3 planeNormal;
+    glm::vec3 planePoint;
+    glm::vec4 clipPlane;
+
     glBindFramebuffer(GL_FRAMEBUFFER, portalTest.p1_FBO);
-    //glViewport(0, 0, texWidth, texHeight);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CLIP_DISTANCE0);
+    glViewport(0, 0, 400, 800);
     main_camera = cameras[1];
+    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        planeNormal = glm::vec3(0.0f, 0.0f, -1.0f);
+        planePoint  = glm::vec3(0.0f, 0.0f, 498.0f);
+        clipPlane = glm::vec4(planeNormal.x, planeNormal.y, planeNormal.z,
+                            -glm::dot(planeNormal, planePoint)  // D = -n·p
+        );
+        glUniform4fv(clipPlaneLoc, 1, glm::value_ptr(clipPlane));
     SceneNode::render();
+    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glBindFramebuffer(GL_FRAMEBUFFER, portalTest.p2_FBO);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CLIP_DISTANCE0);
+    glViewport(0, 0, 400, 800);
     main_camera = cameras[2];
+    glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        planeNormal = glm::vec3(-1.0f, 0.0f, 0.0f);
+        planePoint  = glm::vec3(498.0f, 0.0f, 0.0f);
+        clipPlane = glm::vec4(planeNormal.x, planeNormal.y, planeNormal.z,
+                            -glm::dot(planeNormal, planePoint)  // D = -n·p
+        );
+        glUniform4fv(clipPlaneLoc, 1, glm::value_ptr(clipPlane));
     SceneNode::render();
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     main_camera = temp;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_CLIP_DISTANCE0);
+    if(main_camera == cameras[0]) {
+    glViewport(0, 0, 800, 800);
+        glm::vec3 planeNormal = glm::vec3(0.0f, 1.0f, 0.0f);
+        glm::vec3 planePoint  = glm::vec3(0.0f, -1.0f, 0.0f);
+        glm::vec4 clipPlane(planeNormal.x, planeNormal.y, planeNormal.z,
+                            -glm::dot(planeNormal, planePoint)  // D = -n·p
+        );
+        glUniform4fv(clipPlaneLoc, 1, glm::value_ptr(clipPlane));
+    }
+    else if(main_camera == cameras[2]) {
+    glViewport(0, 0, 400, 800);
+        // 평면: point = (500,0,0), normal = (-1,0,0)
+        glm::vec3 planeNormal = glm::vec3(-1.0f, 0.0f, 0.0f);
+        glm::vec3 planePoint  = glm::vec3(498.0f, 0.0f, 0.0f);
+        glm::vec4 clipPlane(planeNormal.x, planeNormal.y, planeNormal.z,
+                            -glm::dot(planeNormal, planePoint)  // D = -n·p
+        );
+        glUniform4fv(clipPlaneLoc, 1, glm::value_ptr(clipPlane));
+    }
+    else if(main_camera == cameras[1]) {
+    glViewport(0, 0, 400, 800);
+        // 평면: point = (500,0,0), normal = (-1,0,0)
+        glm::vec3 planeNormal = glm::vec3(0.0f, 0.0f, -1.0f);
+        glm::vec3 planePoint  = glm::vec3(0.0f, 0.0f, 498.0f);
+        glm::vec4 clipPlane(planeNormal.x, planeNormal.y, planeNormal.z,
+                            -glm::dot(planeNormal, planePoint)  // D = -n·p
+        );
+        glUniform4fv(clipPlaneLoc, 1, glm::value_ptr(clipPlane));
+    }
     SceneNode::render();
+    glutSwapBuffers();
 }
 
 float qwerasdf = 0.0f;
@@ -87,36 +147,8 @@ void MainScene::update() {
     qwerasdf = qwerasdf > 500.0 ? qwerasdf-500.0 : qwerasdf;
     
     portalTest.update(cameras[0]->position);
-    
-    glEnable(GL_CLIP_DISTANCE0);
-    if(main_camera == cameras[0]) {
-        glm::vec3 planeNormal = glm::vec3(0.0f, 1.0f, 0.0f);
-        glm::vec3 planePoint  = glm::vec3(0.0f, -1.0f, 0.0f);
-        glm::vec4 clipPlane(planeNormal.x, planeNormal.y, planeNormal.z,
-                            -glm::dot(planeNormal, planePoint)  // D = -n·p
-        );
-        glUniform4fv(clipPlaneLoc, 1, glm::value_ptr(clipPlane));
-    }
-    else if(main_camera == cameras[2]) {
-        // 평면: point = (500,0,0), normal = (-1,0,0)
-        glm::vec3 planeNormal = glm::vec3(-1.0f, 0.0f, 0.0f);
-        glm::vec3 planePoint  = glm::vec3(499.0f, 0.0f, 0.0f);
-        glm::vec4 clipPlane(planeNormal.x, planeNormal.y, planeNormal.z,
-                            -glm::dot(planeNormal, planePoint)  // D = -n·p
-        );
-        glUniform4fv(clipPlaneLoc, 1, glm::value_ptr(clipPlane));
-    }
-    else if(main_camera == cameras[1]) {
-        // 평면: point = (500,0,0), normal = (-1,0,0)
-        glm::vec3 planeNormal = glm::vec3(0.0f, 0.0f, -1.0f);
-        glm::vec3 planePoint  = glm::vec3(0.0f, 0.0f, 499.0f);
-        glm::vec4 clipPlane(planeNormal.x, planeNormal.y, planeNormal.z,
-                            -glm::dot(planeNormal, planePoint)  // D = -n·p
-        );
-        glUniform4fv(clipPlaneLoc, 1, glm::value_ptr(clipPlane));
-    }
 
-    std::cout << "mouse position : (" << xpos-200 << ", " << ypos-200 << ")" << std::endl;
+    //std::cout << "mouse position : (" << xpos-200 << ", " << ypos-200 << ")" << std::endl;
     for (auto& [key, value] : timerLock) if(value > 0) value--;
     time++;
     
@@ -143,10 +175,12 @@ void MainScene::update() {
     }
 
     //Main camera move
-    if(keyState['i'] || keyState['I']) cameras[0]->position.x += 1.0;
-    if(keyState['k'] || keyState['K']) cameras[0]->position.x -= 1.0;
-    if(keyState['j'] || keyState['J']) cameras[0]->position.z -= 1.0;
-    if(keyState['l'] || keyState['L']) cameras[0]->position.z += 1.0;
+    glm::vec3 right = glm::normalize(glm::cross(cameras[0]->direction, glm::vec3(0.0, 1.0, 0.0)));
+    glm::vec3 forward = glm::normalize(glm::cross(glm::vec3(0.0, 1.0, 0.0), right));
+    if(keyState['i'] || keyState['I']) cameras[0]->position += 2.0f * forward;
+    if(keyState['k'] || keyState['K']) cameras[0]->position -= 2.0f * forward;
+    if(keyState['l'] || keyState['L']) cameras[0]->position += 2.0f * right;
+    if(keyState['j'] || keyState['J']) cameras[0]->position -= 2.0f * right;
     if(main_camera == cameras[0]) {
         if(xpos != 200 || ypos != 200) {
             float delta_x = xpos - 200.0;
@@ -213,19 +247,19 @@ PortalTest::PortalTest() : ObjectNode("PortalTest", glm::vec3(0.0), glm::vec3(0.
     portal2_direction = glm::vec3(0.0, 0.0, -1.0);
     portal2_up = glm::vec3(0.0, 1.0, 0.0);
 
-    p1_camera = std::make_shared<PersCameraNode>("p1", glm::vec3(300.0, 200.0f, 300.0), glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0, 1.0, 00), 120.0f, 1.0f, 3000.0f);
-    p2_camera = std::make_shared<PersCameraNode>("p2", glm::vec3(300.0, 200.0f, 300.0), glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0, 1.0, 00), 120.0f, 1.0f, 3000.0f);
+    p1_camera = std::make_shared<PersCameraNode>("p1", glm::vec3(300.0, 200.0f, 300.0), glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0, 1.0, 00), 120.0f, 1.0f, 3000.0f, 1.0f/2.0f);
+    p2_camera = std::make_shared<PersCameraNode>("p2", glm::vec3(300.0, 200.0f, 300.0), glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0, 1.0, 00), 120.0f, 1.0f, 3000.0f, 1.0f/2.0f);
 
     glGenTextures(1, &p1_texture);
     glBindTexture(GL_TEXTURE_2D, p1_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 100, 100, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 400, 800, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
     
     glGenTextures(1, &p2_texture);
     glBindTexture(GL_TEXTURE_2D, p2_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 100, 100, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 400, 800, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -233,11 +267,23 @@ PortalTest::PortalTest() : ObjectNode("PortalTest", glm::vec3(0.0), glm::vec3(0.
     glGenFramebuffers(1, &p1_FBO);
     glBindFramebuffer(GL_FRAMEBUFFER, p1_FBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, p1_texture, 0);
+
+    glGenRenderbuffers(1, &p1_depthRBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, p1_depthRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 400, 800);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, p1_depthRBO);
+    
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
     glGenFramebuffers(1, &p2_FBO);
     glBindFramebuffer(GL_FRAMEBUFFER, p2_FBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, p2_texture, 0);
+    
+    glGenRenderbuffers(1, &p2_depthRBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, p2_depthRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 400, 800);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, p2_depthRBO);
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -271,7 +317,8 @@ void PortalTest::update(const glm::vec3& viewer_position) {
 
     p1_camera->up = glm::vec3(0.0, 1.0, 0.0);
     p2_camera->up = glm::vec3(0.0, 1.0, 0.0);
-
+    
+    /*
     std::cout << "-- portal1 --" << std::endl;
     std::cout << "position : (" << portal1_position.x << ", " << portal1_position.y << ", "  << portal1_position.z << ")" << std::endl;
     std::cout << "-------------" << std::endl;
@@ -286,7 +333,5 @@ void PortalTest::update(const glm::vec3& viewer_position) {
     std::cout << "position : (" << p2_camera->position.x << ", " << p2_camera->position.y << ", "  << p2_camera->position.z << ")" << std::endl;
     std::cout << "direciton : (" << p2_camera->direction.x << ", " << p2_camera->direction.y << ", "  << p2_camera->direction.z << ")" << std::endl;
     std::cout << "-------------" << std::endl;
-}
-void PortalTest::render() {
-
+    */
 }

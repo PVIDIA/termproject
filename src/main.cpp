@@ -12,8 +12,10 @@
 #include "game/MainScene.h"
 #include "shader.h"
 
-const GLuint WIDTH = 500;
-const GLuint HEIGHT = 750;
+//const GLuint WIDTH = 500;
+//const GLuint HEIGHT = 750;
+const GLuint WIDTH = 800;
+const GLuint HEIGHT = 800;
 
 GLuint shaderProgram;
 GLint projLoc;
@@ -64,10 +66,7 @@ void idle() {
 }
 
 void display() {
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     if(mainScene) mainScene->render(); 
-    glutSwapBuffers();
 }
 
 int main(int argc, char** argv) {

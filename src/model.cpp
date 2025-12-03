@@ -276,7 +276,7 @@ void Model::draw() const {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         //Texture binding
-        std::cout << "redner texture : " << texture << " : " << modelManager.get_texture(texture) << std::endl;
+        //std::cout << "redner texture : " << texture << " : " << modelManager.get_texture(texture) << std::endl;
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, modelManager.get_texture(texture));
@@ -527,8 +527,8 @@ GLuint loadTexture(const std::string& path) {
     glGenerateMipmap(GL_TEXTURE_2D);
 
     // 텍스처 파라미터
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

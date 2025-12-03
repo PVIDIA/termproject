@@ -20,12 +20,15 @@ public:
     
     GLuint p1_FBO;
     GLuint p2_FBO;
+    
+    GLuint p1_depthRBO;
+    GLuint p2_depthRBO;
 
     PortalTest();
     void update(const glm::vec3& p);
     void update() {}
     void render() {}
-}
+};
 
 class MainScene : public SceneNode {
 public:
