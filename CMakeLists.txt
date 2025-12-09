@@ -35,3 +35,5 @@ target_include_directories(main PRIVATE
     ${GLEW_INCLUDE_DIRS}
     ${GLUT_INCLUDE_DIRS}
 )
+
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/assets/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/assets/")

@@ -6,7 +6,6 @@
 #include <utility>
 
 #include <GL/glew.h>
-#include <GL/freeglut.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -222,7 +221,11 @@ void PersCameraNode::setup() {
     //Projection은 바로 적용
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(fovy, 500.0f/750.0f, zNear, zFar);
+    
+    // Replace gluPerspective with glm::perspective
+    float aspect = 500.0f / 750.0f;
+    glm::mat4 projection = glm::perspective(glm::radians(fovy), aspect, zNear, zFar);
+    glLoadMatrixf(glm::value_ptr(projection));
     
     glm::mat4 model_transformation = transformation;
     glm::mat3 model_rotation = glm::mat3(model_transformation);
@@ -237,12 +240,10 @@ void PersCameraNode::setup() {
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    //Camera 세팅
-    gluLookAt(
-        translated_pos.x, translated_pos.y, translated_pos.z,
-        translated_at.x, translated_at.y, translated_at.z,
-        translated_up.x, translated_up.y, translated_up.z
-    );
+    
+    // Replace gluLookAt with glm::lookAt
+    glm::mat4 view = glm::lookAt(translated_pos, translated_at, translated_up);
+    glLoadMatrixf(glm::value_ptr(view));
 }
 
 
@@ -273,12 +274,10 @@ void OrthoCameraNode::setup() {
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    //Camera 세팅
-    gluLookAt(
-        translated_pos.x, translated_pos.y, translated_pos.z,
-        translated_at.x, translated_at.y, translated_at.z,
-        translated_up.x, translated_up.y, translated_up.z
-    );
+    
+    // Replace gluLookAt with glm::lookAt
+    glm::mat4 view = glm::lookAt(translated_pos, translated_at, translated_up);
+    glLoadMatrixf(glm::value_ptr(view));
 }
 
 // __________ Moodel __________

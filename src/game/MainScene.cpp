@@ -3,7 +3,7 @@
 #include <map>
 
 #include <GL/glew.h>
-#include <GL/freeglut.h>
+#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -20,8 +20,8 @@ extern std::map<unsigned char, bool> keyState;
 extern std::map<int, bool> SpecialkeyState;
 extern std::map<unsigned char, bool> prevkeyState;
 extern std::map<int, bool> prevSpecialkeyState;
-extern int xpos; 
-extern int ypos;
+extern double xpos; 
+extern double ypos;
 extern int render_mode;
 extern bool render_collision;
 
@@ -136,7 +136,6 @@ void MainScene::render() {
         glUniform4fv(clipPlaneLoc, 1, glm::value_ptr(clipPlane));
     }
     SceneNode::render();
-    glutSwapBuffers();
 }
 
 float qwerasdf = 0.0f;
@@ -182,18 +181,29 @@ void MainScene::update() {
     if(keyState['l'] || keyState['L']) cameras[0]->position += 2.0f * right;
     if(keyState['j'] || keyState['J']) cameras[0]->position -= 2.0f * right;
     if(main_camera == cameras[0]) {
-        if(xpos != 200 || ypos != 200) {
-            float delta_x = xpos - 200.0;
-            float delta_y = ypos - 200.0;
-            
-            float sensitivity = 0.002f;
-            glm::vec3 right = glm::normalize(glm::cross(main_camera->direction, main_camera->up));
-            glm::quat qYaw = glm::angleAxis(-delta_x * sensitivity, main_camera->up);
-            glm::quat qPitch = glm::angleAxis(-delta_y * sensitivity, right);
-            glm::quat q = qYaw * qPitch;
-
-            main_camera->direction = glm::normalize(q * main_camera->direction);
+        static double lastX = 400.0;
+        static double lastY = 400.0;
+        static bool firstMouse = true;
+        
+        if (firstMouse) {
+            lastX = xpos;
+            lastY = ypos;
+            firstMouse = false;
         }
+        
+        float delta_x = xpos - lastX;
+        float delta_y = lastY - ypos; // Reversed since y-coordinates go from bottom to top
+        
+        lastX = xpos;
+        lastY = ypos;
+        
+        float sensitivity = 0.002f;
+        glm::vec3 right = glm::normalize(glm::cross(main_camera->direction, main_camera->up));
+        glm::quat qYaw = glm::angleAxis(-delta_x * sensitivity, main_camera->up);
+        glm::quat qPitch = glm::angleAxis(-delta_y * sensitivity, right);
+        glm::quat q = qYaw * qPitch;
+
+        main_camera->direction = glm::normalize(q * main_camera->direction);
     }
     /*
     if(main_camera == cameras[0]) {
