@@ -53,7 +53,6 @@ public:
     void draw() const;
 };
 
-Model loadModelData(const std::string&, const std::string&);
 Model loadModelAssimp(const std::string&, const std::string&, bool flipUVs = true);
 
 class ModelManager {
