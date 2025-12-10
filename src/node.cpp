@@ -295,7 +295,7 @@ void ModelNode::render() {
 
     glTranformate(position, direction, scale, angle);
     glColor3f(color.x, color.y, color.z);
-    modelManager.draw_modelData(name);
+    modelManager.draw_model(name);
 }
 
 // __________ Object __________

@@ -13,6 +13,8 @@ find_package(GLEW REQUIRED)
 find_package(glm REQUIRED)
 find_package(glfw3 REQUIRED)
 
+add_subdirectory(assimp)
+
 # Add the executable
 add_executable(main
     src/main.cpp
@@ -27,6 +29,7 @@ target_link_libraries(main PRIVATE
     GLEW::GLEW
     glfw
     glm::glm
+    assimp
 )
 
 # Make sure the include directories are added

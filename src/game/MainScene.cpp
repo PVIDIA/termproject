@@ -58,8 +58,8 @@ MainScene::MainScene() : SceneNode("MainScene"), portalTest() {
     addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0, 500.0, 500.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(1.0, 0.0, 0.0)), 500.0f, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_cobble"));
     
     std::cout << "portalTest texture : " << portalTest.p1_texture << ", " << portalTest.p2_texture<< std::endl;
-    addChild(std::make_shared<ModelNode>("portal1", glm::vec3(499.0, 200.0, 0.0), glm::angleAxis(float(glm::radians(90.0)), glm::vec3(0.0, 1.0, 0.0))*glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(1.0, 0.0, 0.0)), 100.0f, glm::vec3(0.0, 1.0, 0.0), "p1_texture", portalTest.p1_texture));
-    addChild(std::make_shared<ModelNode>("portal2", glm::vec3(0.0, 200.0, 499.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(1.0, 0.0, 0.0)), 100.0f, glm::vec3(0.0, 1.0, 0.0), "p2_texture", portalTest.p2_texture));
+    addChild(std::make_shared<ModelNode>("portal1", glm::vec3(499.0, 200.0, 0.0), glm::angleAxis(float(glm::radians(90.0)), glm::vec3(0.0, 1.0, 0.0))*glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(1.0, 0.0, 0.0)), 100.0f, glm::vec3(0.0, 1.0, 0.0), "p1_texture", ""));
+    addChild(std::make_shared<ModelNode>("portal2", glm::vec3(0.0, 200.0, 499.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(1.0, 0.0, 0.0)), 100.0f, glm::vec3(0.0, 1.0, 0.0), "p2_texture", ""));
 
     std::cout << "-- portal1 --" << std::endl;
     collectCollisions();
@@ -278,6 +278,8 @@ PortalTest::PortalTest() : ObjectNode("PortalTest", glm::vec3(0.0), glm::vec3(0.
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fbWidth / 2, fbHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glBindTexture(GL_TEXTURE_2D, 0);
     
     glGenTextures(1, &p2_texture);
@@ -285,6 +287,8 @@ PortalTest::PortalTest() : ObjectNode("PortalTest", glm::vec3(0.0), glm::vec3(0.
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fbWidth / 2, fbHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glBindTexture(GL_TEXTURE_2D, 0);
     
     glGenFramebuffers(1, &p1_FBO);
@@ -308,6 +312,11 @@ PortalTest::PortalTest() : ObjectNode("PortalTest", glm::vec3(0.0), glm::vec3(0.
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, p2_depthRBO);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    // Register portal textures in ModelManager so they can be used by models
+    extern ModelManager modelManager;
+    modelManager.textures["p1_texture"] = p1_texture;
+    modelManager.textures["p2_texture"] = p2_texture;
 }
 
 void PortalTest::update(const glm::vec3& viewer_position) {
