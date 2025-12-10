@@ -70,10 +70,14 @@ void MainScene::render() {
     glm::vec3 planePoint;
     glm::vec4 clipPlane;
 
+    extern GLFWwindow* window;
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+    
     glBindFramebuffer(GL_FRAMEBUFFER, portalTest.p1_FBO);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CLIP_DISTANCE0);
-    glViewport(0, 0, 400, 800);
+    glViewport(0, 0, fbWidth / 2, fbHeight);
     main_camera = cameras[1];
     glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -89,7 +93,7 @@ void MainScene::render() {
     glBindFramebuffer(GL_FRAMEBUFFER, portalTest.p2_FBO);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CLIP_DISTANCE0);
-    glViewport(0, 0, 400, 800);
+    glViewport(0, 0, fbWidth / 2, fbHeight);
     main_camera = cameras[2];
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -107,7 +111,11 @@ void MainScene::render() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_CLIP_DISTANCE0);
     if(main_camera == cameras[0]) {
-    glViewport(0, 0, 800, 800);
+    // Get actual framebuffer size for proper viewport
+    extern GLFWwindow* window;
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+    glViewport(0, 0, fbWidth, fbHeight);
         glm::vec3 planeNormal = glm::vec3(0.0f, 1.0f, 0.0f);
         glm::vec3 planePoint  = glm::vec3(0.0f, -1.0f, 0.0f);
         glm::vec4 clipPlane(planeNormal.x, planeNormal.y, planeNormal.z,
@@ -116,7 +124,7 @@ void MainScene::render() {
         glUniform4fv(clipPlaneLoc, 1, glm::value_ptr(clipPlane));
     }
     else if(main_camera == cameras[2]) {
-    glViewport(0, 0, 400, 800);
+    glViewport(0, 0, fbWidth / 2, fbHeight);
         // 평면: point = (500,0,0), normal = (-1,0,0)
         glm::vec3 planeNormal = glm::vec3(-1.0f, 0.0f, 0.0f);
         glm::vec3 planePoint  = glm::vec3(498.0f, 0.0f, 0.0f);
@@ -126,7 +134,7 @@ void MainScene::render() {
         glUniform4fv(clipPlaneLoc, 1, glm::value_ptr(clipPlane));
     }
     else if(main_camera == cameras[1]) {
-    glViewport(0, 0, 400, 800);
+    glViewport(0, 0, fbWidth / 2, fbHeight);
         // 평면: point = (500,0,0), normal = (-1,0,0)
         glm::vec3 planeNormal = glm::vec3(0.0f, 0.0f, -1.0f);
         glm::vec3 planePoint  = glm::vec3(0.0f, 0.0f, 498.0f);
@@ -260,16 +268,21 @@ PortalTest::PortalTest() : ObjectNode("PortalTest", glm::vec3(0.0), glm::vec3(0.
     p1_camera = std::make_shared<PersCameraNode>("p1", glm::vec3(300.0, 200.0f, 300.0), glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0, 1.0, 00), 120.0f, 1.0f, 3000.0f, 1.0f/2.0f);
     p2_camera = std::make_shared<PersCameraNode>("p2", glm::vec3(300.0, 200.0f, 300.0), glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0, 1.0, 00), 120.0f, 1.0f, 3000.0f, 1.0f/2.0f);
 
+    // Get actual framebuffer size for portal textures
+    extern GLFWwindow* window;
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+    
     glGenTextures(1, &p1_texture);
     glBindTexture(GL_TEXTURE_2D, p1_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 400, 800, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fbWidth / 2, fbHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
     
     glGenTextures(1, &p2_texture);
     glBindTexture(GL_TEXTURE_2D, p2_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 400, 800, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fbWidth / 2, fbHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -280,7 +293,7 @@ PortalTest::PortalTest() : ObjectNode("PortalTest", glm::vec3(0.0), glm::vec3(0.
 
     glGenRenderbuffers(1, &p1_depthRBO);
     glBindRenderbuffer(GL_RENDERBUFFER, p1_depthRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 400, 800);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, fbWidth / 2, fbHeight);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, p1_depthRBO);
     
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -291,7 +304,7 @@ PortalTest::PortalTest() : ObjectNode("PortalTest", glm::vec3(0.0), glm::vec3(0.
     
     glGenRenderbuffers(1, &p2_depthRBO);
     glBindRenderbuffer(GL_RENDERBUFFER, p2_depthRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 400, 800);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, fbWidth / 2, fbHeight);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, p2_depthRBO);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);

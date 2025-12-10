@@ -65,6 +65,10 @@ void cursorPosCallback(GLFWwindow* window, double x, double y) {
     ypos = y;
 }
 
+void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
+}
+
 std::shared_ptr<MainScene> mainScene;
 
 bool is_started = false;
@@ -134,6 +138,12 @@ int main(int argc, char** argv) {
     // Set GLFW callbacks
     glfwSetKeyCallback(window, keyCallback);
     glfwSetCursorPosCallback(window, cursorPosCallback);
+    glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+    
+    // Set initial viewport to actual framebuffer size
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+    glViewport(0, 0, fbWidth, fbHeight);
     
     // Setup cursor for FPS camera
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
