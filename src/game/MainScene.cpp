@@ -8,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/constants.hpp>
+#include <glm/gtx/intersect.hpp>
 #include <random>
 #include <stack>
 
@@ -22,6 +23,8 @@ extern std::map<unsigned char, bool> prevkeyState;
 extern std::map<int, bool> prevSpecialkeyState;
 extern double xpos; 
 extern double ypos;
+extern bool leftMousePressed;
+extern bool rightMousePressed;
 extern int render_mode;
 extern bool render_collision;
 
@@ -259,8 +262,41 @@ void MainScene::update() {
     }
     */
    
-    portalManager.setPortal1(glm::vec3(500.0-10.1, 200.0+10.0, 200.0), glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-    portalManager.setPortal2(glm::vec3(200.0, 200.0, 500.0-10.1), glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, 1.0, 0.0));
+    // 마우스 클릭으로 포탈 위치 설정
+    static bool prevLeftMousePressed = false;
+    static bool prevRightMousePressed = false;
+    
+    if (leftMousePressed && !prevLeftMousePressed) {
+        // 왼쪽 클릭 - 포탈1 배치
+        glm::vec3 hitPos, hitNormal;
+        if (raycastToWall(cameras[0]->position, cameras[0]->direction, hitPos, hitNormal)) {
+            // 포탈을 벽에서 약간 떨어뜨려 배치 (Z-fighting 방지)
+            glm::vec3 offset = hitNormal * 10.1f;
+            portalManager.setPortal1(hitPos + offset, hitNormal, glm::vec3(0.0, 1.0, 0.0));
+            std::cout << "Portal 1 placed at (" << (hitPos + offset).x << ", " << (hitPos + offset).y << ", " << (hitPos + offset).z << ")" << std::endl;
+        }
+    }
+    
+    if (rightMousePressed && !prevRightMousePressed) {
+        // 오른쪽 클릭 - 포탈2 배치
+        glm::vec3 hitPos, hitNormal;
+        if (raycastToWall(cameras[0]->position, cameras[0]->direction, hitPos, hitNormal)) {
+            // 포탈을 벽에서 약간 떨어뜨려 배치 (Z-fighting 방지)
+            glm::vec3 offset = hitNormal * 10.1f;
+            portalManager.setPortal2(hitPos + offset, hitNormal, glm::vec3(0.0, 1.0, 0.0));
+            std::cout << "Portal 2 placed at (" << (hitPos + offset).x << ", " << (hitPos + offset).y << ", " << (hitPos + offset).z << ")" << std::endl;
+        }
+    }
+    
+    prevLeftMousePressed = leftMousePressed;
+    prevRightMousePressed = rightMousePressed;
+    
+    if (!portalManager.portal1_activated) {
+        portalManager.setPortal1(glm::vec3(500.0-10.1, 200.0+10.0, 200.0), glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+    }
+    if (!portalManager.portal2_activated) {
+        portalManager.setPortal2(glm::vec3(200.0, 200.0, 500.0-10.1), glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, 1.0, 0.0));
+    }
     portalManager.update_camera(cameras[0]->position, cameras[0]->direction, cameras[0]->up);
 
     Player * pl = player.get();
@@ -287,4 +323,63 @@ void Test::update() {
 }
 void Test::render() {
     ObjectNode::render();
+}
+
+bool MainScene::raycastToWall(const glm::vec3& origin, const glm::vec3& direction, glm::vec3& hitPos, glm::vec3& hitNormal) {
+    // 방의 6개 벽 정의 (위치, 법선)
+    struct Wall {
+        glm::vec3 position;
+        glm::vec3 normal;
+        std::string name;
+    };
+    
+    std::vector<Wall> walls = {
+        {glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0), "floor"},           // 바닥
+        {glm::vec3(500.0, 500.0, 0.0), glm::vec3(-1.0, 0.0, 0.0), "right"},     // 오른쪽 벽
+        {glm::vec3(-500.0, 500.0, 0.0), glm::vec3(1.0, 0.0, 0.0), "left"},      // 왼쪽 벽
+        {glm::vec3(0.0, 500.0, -500.0), glm::vec3(0.0, 0.0, 1.0), "back"},      // 뒤쪽 벽
+        {glm::vec3(0.0, 500.0, 500.0), glm::vec3(0.0, 0.0, -1.0), "front"}      // 앞쪽 벽
+    };
+    
+    float minDistance = std::numeric_limits<float>::max();
+    bool found = false;
+    glm::vec3 closestHit;
+    glm::vec3 closestNormal;
+    
+    for (const auto& wall : walls) {
+        float distance;
+        if (glm::intersectRayPlane(origin, direction, wall.position, wall.normal, distance)) {
+            if (distance > 0.0f && distance < minDistance) {
+                glm::vec3 intersection = origin + direction * distance;
+                
+                // 벽의 범위 내에 있는지 확인
+                bool inBounds = true;
+                if (wall.name == "floor") {
+                    inBounds = (intersection.x >= -500.0f && intersection.x <= 500.0f &&
+                               intersection.z >= -500.0f && intersection.z <= 500.0f);
+                } else if (wall.name == "right" || wall.name == "left") {
+                    inBounds = (intersection.y >= 0.0f && intersection.y <= 1000.0f &&
+                               intersection.z >= -500.0f && intersection.z <= 500.0f);
+                } else if (wall.name == "back" || wall.name == "front") {
+                    inBounds = (intersection.x >= -500.0f && intersection.x <= 500.0f &&
+                               intersection.y >= 0.0f && intersection.y <= 1000.0f);
+                }
+                
+                if (inBounds) {
+                    minDistance = distance;
+                    closestHit = intersection;
+                    closestNormal = wall.normal;
+                    found = true;
+                }
+            }
+        }
+    }
+    
+    if (found) {
+        hitPos = closestHit;
+        hitNormal = closestNormal;
+        return true;
+    }
+    
+    return false;
 }

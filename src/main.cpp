@@ -37,6 +37,8 @@ std::map<int, bool> prevSpecialkeyState;
 double xpos = 200.0; 
 double ypos = 200.0;
 bool firstMouse = true;
+bool leftMousePressed = false;
+bool rightMousePressed = false;
 
 bool isRenderingPortal = false;
 
@@ -65,6 +67,23 @@ void charCallback(GLFWwindow* window, unsigned int codepoint) {
 void cursorPosCallback(GLFWwindow* window, double x, double y) {
     xpos = x;
     ypos = y;
+}
+
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (action == GLFW_PRESS) {
+            leftMousePressed = true;
+        } else if (action == GLFW_RELEASE) {
+            leftMousePressed = false;
+        }
+    }
+    if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+        if (action == GLFW_PRESS) {
+            rightMousePressed = true;
+        } else if (action == GLFW_RELEASE) {
+            rightMousePressed = false;
+        }
+    }
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
@@ -140,6 +159,7 @@ int main(int argc, char** argv) {
     // Set GLFW callbacks
     glfwSetKeyCallback(window, keyCallback);
     glfwSetCursorPosCallback(window, cursorPosCallback);
+    glfwSetMouseButtonCallback(window, mouseButtonCallback);
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
     
     // Set initial viewport to actual framebuffer size
