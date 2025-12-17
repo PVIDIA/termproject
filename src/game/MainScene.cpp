@@ -258,7 +258,7 @@ void MainScene::update() {
 
 
 Test::Test() : ObjectNode("Test", glm::vec3(100.0, 100.0, 100.0), glm::vec3(0.0, 0.0, 1.0)) {
-    addChild(std::make_shared<ModelNode>("rice", glm::vec3(0.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(0.0, 1.0, 0.0)), 50.0, glm::vec3(1.0, 1.0, 0.0), "diffuse_rice", "normal_cobble"));
+    addChild(std::make_shared<ModelNode>("portal_cube/scene", glm::vec3(0.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(0.0, 1.0, 0.0)), 10.0, glm::vec3(1.0, 1.0, 0.0)));
 }
 
 void Test::update() {

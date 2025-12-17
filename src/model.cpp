@@ -136,7 +136,6 @@ Model::Model(const std::string& n, const std::string& m, const std::string& nm) 
 
 std::string ModelManager::loadModel(const std::string& n, const std::string& t, const std::string& nt) {
     std::string dir = "assets/";
-    std::string extend = ".obj";
     std::string extend2 = ".png";
     
     if(count(n) == 1) {
@@ -148,15 +147,43 @@ std::string ModelManager::loadModel(const std::string& n, const std::string& t, 
     else {
         std::cout << "load" << std::endl;
         // Use Assimp to load model (supports OBJ and many other formats)
+        // Try multiple file formats in order of preference
+        std::vector<std::string> extensions = {".fbx", ".gltf", ".glb", ".obj", ".dae", ".blend"};
+        std::string modelPath;
+        bool found = false;
+        
+        for (const auto& ext : extensions) {
+            std::string testPath = dir + n + ext;
+            std::cout << "  Trying: " << testPath << std::endl;
+            if (std::filesystem::exists(testPath)) {
+                modelPath = testPath;
+                found = true;
+                std::cout << "Found model: " << modelPath << std::endl;
+                break;
+            }
+        }
+        
+        if (!found) {
+            std::cerr << "Model file not found for: " << n << std::endl;
+            std::cerr << "Tried extensions: ";
+            for (const auto& ext : extensions) std::cerr << ext << " ";
+            std::cerr << std::endl;
+            return n;
+        }
+        
         // Portal models should not flip UVs since they use FBO textures
         bool flipUVs = (n != "portal1" && n != "portal2");
-        models[n] = loadModelAssimp(dir+n+extend, n, flipUVs);
+        models[n] = loadModelAssimp(modelPath, n, flipUVs);
+        
+        // Extract model directory for texture path resolution
+        std::string modelDir = modelPath.substr(0, modelPath.find_last_of('/') + 1);
         
         // Load textures from Assimp material or use provided texture names
         for (auto& mesh : models[n].meshes) {
             // Load diffuse texture
             if (!mesh.material.diffuseTexture.empty()) {
-                std::string texPath = dir + mesh.material.diffuseTexture;
+                // Resolve texture path relative to model directory
+                std::string texPath = modelDir + mesh.material.diffuseTexture;
                 if (textures.find(mesh.material.diffuseTexture) == textures.end()) {
                     textures[mesh.material.diffuseTexture] = loadTexture(texPath);
                 }
@@ -170,7 +197,8 @@ std::string ModelManager::loadModel(const std::string& n, const std::string& t, 
             
             // Load normal texture
             if (!mesh.material.normalTexture.empty()) {
-                std::string texPath = dir + mesh.material.normalTexture;
+                // Resolve texture path relative to model directory
+                std::string texPath = modelDir + mesh.material.normalTexture;
                 if (textures.find(mesh.material.normalTexture) == textures.end()) {
                     textures[mesh.material.normalTexture] = loadTexture(texPath);
                 }

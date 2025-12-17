@@ -21,6 +21,7 @@ add_executable(main
     src/model.cpp
     src/node2.cpp
     src/game/MainScene.cpp
+    src/portal.cpp
 )
 
 # Link libraries
