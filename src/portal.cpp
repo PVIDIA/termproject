@@ -42,6 +42,22 @@ void Portal::redner_stencil_model(const glm::mat4& m) {
     stack_model_matrix.pop();
 }
 
+bool Portal::isPositionBehind(const glm::vec3& pos) const {
+    // Vector from portal position to test position
+    glm::vec3 toPos = pos - position;
+    // If dot product with portal direction is negative, position is behind portal
+    return glm::dot(toPos, direction) < 0.0f;
+}
+
+bool Portal::didCrossPortal(const glm::vec3& prevPos, const glm::vec3& currPos) const {
+    // Check if the two positions are on opposite sides of the portal plane
+    bool prevBehind = isPositionBehind(prevPos);
+    bool currBehind = isPositionBehind(currPos);
+    // Crossing occurred if we moved from front (not behind) to back (behind)
+    // This means we went THROUGH the portal
+    return !prevBehind && currBehind;
+}
+
 void PortalManager::setPortal1(const glm::vec3& pos, const glm::vec3& dir, const glm::vec3& u) {
     portal1.position = pos;
     portal1.direction = dir;
@@ -240,4 +256,51 @@ void PortalManager::draw_stencil(int depth, const glm::mat4& portal1_matrix, con
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glDepthRange(0.0, 1.0);
     glDepthFunc(GL_LESS);
+}
+
+bool PortalManager::checkAndTeleport(glm::vec3& position, glm::vec3& direction, glm::vec3& up, const glm::vec3& prevPosition) {
+    // Both portals must be activated for teleportation
+    if (!portal1_activated || !portal2_activated) {
+        return false;
+    }
+    
+    // Check if crossed portal 1 -> teleport to portal 2
+    if (portal1.didCrossPortal(prevPosition, position)) {
+        std::cout << "Portal 1 crossed! Teleporting to Portal 2..." << std::endl;
+        // Transform matrices
+        glm::mat4 flip180 = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0, 1.0, 0.0));
+        glm::mat4 m12 = portal2.local_to_wolrd() * flip180 * portal1.local_to_wolrd_inverse();
+        
+        // Transform position
+        glm::vec4 newPos = m12 * glm::vec4(position, 1.0f);
+        position = glm::vec3(newPos) / newPos.w;
+        
+        // Transform direction and up vectors (rotation only, no translation)
+        glm::mat3 rotationMatrix = glm::mat3(m12);
+        direction = glm::normalize(rotationMatrix * direction);
+        up = glm::normalize(rotationMatrix * up);
+        
+        return true;
+    }
+    
+    // Check if crossed portal 2 -> teleport to portal 1
+    if (portal2.didCrossPortal(prevPosition, position)) {
+        std::cout << "Portal 2 crossed! Teleporting to Portal 1..." << std::endl;
+        // Transform matrices
+        glm::mat4 flip180 = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0, 1.0, 0.0));
+        glm::mat4 m21 = portal1.local_to_wolrd() * flip180 * portal2.local_to_wolrd_inverse();
+        
+        // Transform position
+        glm::vec4 newPos = m21 * glm::vec4(position, 1.0f);
+        position = glm::vec3(newPos) / newPos.w;
+        
+        // Transform direction and up vectors (rotation only, no translation)
+        glm::mat3 rotationMatrix = glm::mat3(m21);
+        direction = glm::normalize(rotationMatrix * direction);
+        up = glm::normalize(rotationMatrix * up);
+        
+        return true;
+    }
+    
+    return false;
 }

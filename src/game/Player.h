@@ -8,6 +8,8 @@
 
 class Player : public ObjectNode {
 public:
+    glm::vec3 previous_position;
+    
     Player();
     void update();
     void render();

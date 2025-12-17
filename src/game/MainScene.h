@@ -13,6 +13,7 @@ public:
     std::shared_ptr<Player> player;
 
     int time = 0;
+    glm::vec3 prevCameraPosition;
 
     MainScene();
     void update();

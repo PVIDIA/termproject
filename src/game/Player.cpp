@@ -12,10 +12,13 @@ extern bool isRenderingPortal;
 
 Player::Player() : ObjectNode("Player", glm::vec3(100.0, 0.0, 100.0), glm::vec3(0.0, 0.0, 1.0)) {
     addChild(std::make_shared<ModelNode>("chell/scene", glm::vec3(0.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(0.0, 1.0, 0.0)), 3.0, glm::vec3(1.0, 1.0, 0.0)));
+    previous_position = position;
 }
 
 void Player::update() {
-
+    // Store previous position before updating
+    previous_position = position;
+    
     ObjectNode::update();
 }
 void Player::render() {

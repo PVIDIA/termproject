@@ -51,6 +51,9 @@ MainScene::MainScene() : SceneNode("MainScene") {
     addChild(cameras[0]); //Camera push : WorldPersCamera(0)
     current_camera_num = 0;
     main_camera = cameras[current_camera_num];
+    
+    // Initialize previous camera position
+    prevCameraPosition = cameras[0]->position;
 
     node = std::make_shared<Test>();
     addChild(node); node = nullptr;
@@ -239,6 +242,15 @@ void MainScene::update() {
 
         main_camera->direction = glm::normalize(q * main_camera->direction);
     }
+    
+    // Check for portal teleportation after camera movement
+    if (portalManager.checkAndTeleport(cameras[0]->position, cameras[0]->direction, cameras[0]->up, prevCameraPosition)) {
+        // Teleportation occurred - camera position, direction, and up have been updated
+    }
+    
+    // Store current camera position for next frame
+    prevCameraPosition = cameras[0]->position;
+    
     /*
     if(main_camera == cameras[0]) {
         if(keyState['u'] || keyState['U']) main_camera->position += 120.0f*main_camera->direction/60.0f;

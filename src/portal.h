@@ -27,6 +27,11 @@ public:
 
     void redner_stencil_model();
     void redner_stencil_model(const glm::mat4& m);
+    
+    // Check if a position is behind the portal plane (in the direction opposite to portal's facing)
+    bool isPositionBehind(const glm::vec3& pos) const;
+    // Check if movement from prevPos to currPos crossed the portal plane
+    bool didCrossPortal(const glm::vec3& prevPos, const glm::vec3& currPos) const;
 };
 
 class PortalManager {
@@ -54,4 +59,8 @@ public:
     void draw_stencil(int depth, const glm::mat4& portal1_matrix, const glm::mat4& portal2_matrix);
 
     void render();
+    
+    // Check if position crossed a portal and teleport if needed
+    // Returns true if teleportation occurred
+    bool checkAndTeleport(glm::vec3& position, glm::vec3& direction, glm::vec3& up, const glm::vec3& prevPosition);
 };
