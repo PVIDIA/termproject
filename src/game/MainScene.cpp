@@ -152,6 +152,7 @@ void MainScene::render_recursive(int depth, int max_depth, const glm::mat4& port
 
     portalManager.setPortal1Clipping(portal1_matrix);
 
+    isRenderingPortal = true;
     SceneNode::render();
     
     // portal 2 내부 그리기
@@ -263,7 +264,7 @@ void MainScene::update() {
     portalManager.update_camera(cameras[0]->position, cameras[0]->direction, cameras[0]->up);
 
     Player * pl = player.get();
-    pl->position = cameras[0]->position;
+    pl->position = cameras[0]->position - glm::vec3(0.0, 200.0f, 0.0);
     glm::vec3 horizontalDir = glm::normalize(glm::vec3(cameras[0]->direction.x, 0.0f, cameras[0]->direction.z));
     float yaw = atan2(horizontalDir.x, horizontalDir.z) + glm::radians(90.0f);
     pl->rotation = glm::angleAxis(yaw, glm::vec3(0.0f, 1.0f, 0.0f));
