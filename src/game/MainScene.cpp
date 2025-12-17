@@ -34,6 +34,9 @@ extern GLint clipPlaneLoc;
 std::map<std::string, int> timerLock;
 //0이면 사용할 수 있음, idle마다 1씩 감소
 
+extern bool isRenderingPortal;
+
+
 // __________ MainScene __________
 
 MainScene::MainScene() : SceneNode("MainScene") {
@@ -49,11 +52,14 @@ MainScene::MainScene() : SceneNode("MainScene") {
     node = std::make_shared<Test>();
     addChild(node); node = nullptr;
 
-    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0), glm::angleAxis(float(glm::radians(0.0)), glm::vec3(0.0, 1.0, 0.0)), 500.0f, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_cobble"));
-    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(500.0, 500.0, 0.0), glm::angleAxis(float(glm::radians(90.0)), glm::vec3(0.0, 0.0, 1.0)), 500.0f, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_cobble"));
-    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(-500.0, 500.0, 0.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(0.0, 0.0, 1.0)), 500.0f, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_cobble"));
-    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0, 500.0, -500.0), glm::angleAxis(float(glm::radians(90.0)), glm::vec3(1.0, 0.0, 0.0)), 500.0f, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_cobble"));
-    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0, 500.0, 500.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(1.0, 0.0, 0.0)), 500.0f, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_cobble"));
+    player = std::make_shared<Player>();
+    addChild(player);
+
+    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0), glm::angleAxis(float(glm::radians(0.0)), glm::vec3(0.0, 1.0, 0.0)), 500.0f, glm::vec3(1.0, 1.0, 0.0), "CONCRETECONCRETE_MODULAR_CEILING001A_baseColor", "normal_cobble"));
+    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(500.0, 500.0, 0.0), glm::angleAxis(float(glm::radians(90.0)), glm::vec3(0.0, 0.0, 1.0)), 500.0f, glm::vec3(1.0, 1.0, 0.0), "CONCRETECONCRETE_MODULAR_CEILING001A_baseColor", "normal_cobble"));
+    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(-500.0, 500.0, 0.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(0.0, 0.0, 1.0)), 500.0f, glm::vec3(1.0, 1.0, 0.0), "CONCRETECONCRETE_MODULAR_CEILING001A_baseColor", "normal_cobble"));
+    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0, 500.0, -500.0), glm::angleAxis(float(glm::radians(90.0)), glm::vec3(1.0, 0.0, 0.0)), 500.0f, glm::vec3(1.0, 1.0, 0.0), "CONCRETECONCRETE_MODULAR_CEILING001A_baseColor", "normal_cobble"));
+    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0, 500.0, 500.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(1.0, 0.0, 0.0)), 500.0f, glm::vec3(1.0, 1.0, 0.0), "CONCRETECONCRETE_MODULAR_CEILING001A_baseColor", "normal_cobble"));
     
     std::cout << "-- portal1 --" << std::endl;
     collectCollisions();
@@ -76,6 +82,7 @@ void MainScene::render() {
     glStencilFunc(GL_EQUAL, 0, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
+    isRenderingPortal = false;
     SceneNode::render();
     std::shared_ptr<CameraNode> temp = main_camera;
 
@@ -102,6 +109,7 @@ void MainScene::render() {
 
     portalManager.setPortal1Clipping();
 
+    isRenderingPortal = true;
     SceneNode::render();
     
     // portal 2 내부 그리기
@@ -113,6 +121,7 @@ void MainScene::render() {
 
     portalManager.setPortal2Clipping();
 
+    isRenderingPortal = true;
     SceneNode::render();
 
     glDisable(GL_CLIP_DISTANCE0);
@@ -252,6 +261,12 @@ void MainScene::update() {
     portalManager.setPortal1(glm::vec3(500.0-10.1, 200.0+10.0, 200.0), glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
     portalManager.setPortal2(glm::vec3(200.0, 200.0, 500.0-10.1), glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, 1.0, 0.0));
     portalManager.update_camera(cameras[0]->position, cameras[0]->direction, cameras[0]->up);
+
+    Player * pl = player.get();
+    pl->position = cameras[0]->position;
+    glm::vec3 horizontalDir = glm::normalize(glm::vec3(cameras[0]->direction.x, 0.0f, cameras[0]->direction.z));
+    float yaw = atan2(horizontalDir.x, horizontalDir.z) + glm::radians(90.0f);
+    pl->rotation = glm::angleAxis(yaw, glm::vec3(0.0f, 1.0f, 0.0f));
 
     SceneNode::update();
 }

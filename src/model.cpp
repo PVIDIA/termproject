@@ -172,7 +172,10 @@ std::string ModelManager::loadModel(const std::string& n, const std::string& t, 
         }
         
         // Portal models should not flip UVs since they use FBO textures
-        bool flipUVs = (n != "portal1" && n != "portal2");
+        // GLTF/GLB models should not flip UVs as they already use OpenGL convention
+        bool flipUVs = (n != "portal1" && n != "portal2" && 
+                        modelPath.find(".gltf") == std::string::npos && 
+                        modelPath.find(".glb") == std::string::npos);
         models[n] = loadModelAssimp(modelPath, n, flipUVs);
         
         // Extract model directory for texture path resolution

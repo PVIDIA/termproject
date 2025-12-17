@@ -38,6 +38,8 @@ double xpos = 200.0;
 double ypos = 200.0;
 bool firstMouse = true;
 
+bool isRenderingPortal = false;
+
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (key >= 0 && key < 256) {
         if (action == GLFW_PRESS) {

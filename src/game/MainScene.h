@@ -1,5 +1,6 @@
 #include "../node.h"
 #include "../portal.h"
+#include "Player.h"
 
 #include <vector>
 
@@ -9,6 +10,7 @@ public:
     int current_camera_num;
 
     PortalManager portalManager;
+    std::shared_ptr<Player> player;
 
     int time = 0;
 
