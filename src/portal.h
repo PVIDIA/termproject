@@ -26,6 +26,7 @@ public:
     std::shared_ptr<ModelNode> texture_model;
 
     void redner_stencil_model();
+    void redner_stencil_model(const glm::mat4& m);
 };
 
 class PortalManager {
@@ -43,11 +44,14 @@ public:
     void setPortal2(const glm::vec3& pos, const glm::vec3& dir, const glm::vec3& u);
     
     void setPortal1Clipping(float offset=0.0f);
+    void setPortal1Clipping(const glm::mat4& portal1_matrix, float offset=0.0f);
     void setPortal2Clipping(float offset=0.0f);
+    void setPortal2Clipping(const glm::mat4& portal2_matrix, float offset=0.0f);
 
     void update_camera(const glm::vec3& viewer_position, const glm::vec3& viewer_direction, const glm::vec3& viewer_up);
 
     void draw_stencil();
+    void draw_stencil(int depth, const glm::mat4& portal1_matrix, const glm::mat4& portal2_matrix);
 
     void render();
 };

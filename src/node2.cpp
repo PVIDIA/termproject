@@ -123,6 +123,25 @@ void SceneNode::render() {
     }
 }
 
+void SceneNode::render(const glm::mat4& m) {
+    //background
+
+    //camera
+    //std::cout << "camera setup" << std::endl;
+    main_camera->setup();
+    
+    model_matrix = m;
+    stack_model_matrix = std::stack<glm::mat4>();
+
+    for(auto& node : children) {
+        //node 업데이트
+        stack_model_matrix.push(model_matrix);
+        node->render();
+        model_matrix = stack_model_matrix.top();
+        stack_model_matrix.pop();
+    }
+}
+
 bool is_collided(const CollisionNode& a, const CollisionNode& b) {
     glm::vec3 delta = a.real_position - b.real_position;
     return (a.radius+b.radius)*(a.radius+b.radius) > (delta.x*delta.x + delta.y*delta.y + delta.z*delta.z);

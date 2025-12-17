@@ -124,6 +124,7 @@ public:
     std::string getType() const { return type; } 
     virtual void update();
     virtual void render();
+    void render(const glm::mat4& m);
     
     void push_collision(const std::shared_ptr<CollisionNode>& c) { collisions.push_back(c); }
 };

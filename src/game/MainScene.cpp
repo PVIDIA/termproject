@@ -77,15 +77,27 @@ void MainScene::render() {
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
     SceneNode::render();
+    std::shared_ptr<CameraNode> temp = main_camera;
 
+
+    glm::mat4 portal1World = portalManager.portal1.local_to_wolrd();
+    glm::mat4 portal1World_inverse = glm::inverse(portal1World);
+    glm::mat4 portal2World = portalManager.portal2.local_to_wolrd();
+    glm::mat4 portal2World_inverse = glm::inverse(portal2World);
+    glm::mat4 flip180 = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0,1,0));
+    glm::mat4 m12 = portal2World * flip180 * portal1World_inverse;
+    glm::mat4 m21 = portal1World * flip180 * portal2World_inverse;
+/*
     // potal stencil 값 생성 및 깊이, 생각 초기화
     portalManager.draw_stencil();
 
     // portal 1 내부 그리기
-    std::shared_ptr<CameraNode> temp = main_camera;
     glEnable(GL_CLIP_DISTANCE0);
 
     glStencilFunc(GL_EQUAL, 1, 0xFF);
+    portalManager.portal1_camera->position = glm::vec3(m12 * glm::vec4(portalManager.portal1_camera->position, 1.0));
+    portalManager.portal1_camera->direction = glm::mat3(m12) * portalManager.portal1_camera->direction;
+    portalManager.portal1_camera->up = glm::mat3(m12) * portalManager.portal1_camera->up;
     main_camera = portalManager.portal1_camera;
 
     portalManager.setPortal1Clipping();
@@ -94,6 +106,9 @@ void MainScene::render() {
     
     // portal 2 내부 그리기
     glStencilFunc(GL_EQUAL, 2, 0xFF);
+    portalManager.portal2_camera->position = glm::vec3(m21 * glm::vec4(portalManager.portal2_camera->position, 1.0));
+    portalManager.portal2_camera->direction = glm::mat3(m21) * portalManager.portal2_camera->direction;
+    portalManager.portal2_camera->up = glm::mat3(m21) * portalManager.portal2_camera->up;
     main_camera = portalManager.portal2_camera;
 
     portalManager.setPortal2Clipping();
@@ -101,7 +116,49 @@ void MainScene::render() {
     SceneNode::render();
 
     glDisable(GL_CLIP_DISTANCE0);
+*/
+    render_recursive(0, 0, glm::mat4(1.0f), glm::mat4(1.0f), m12, m21);
+
     main_camera = temp;
+}
+
+void MainScene::render_recursive(int depth, int max_depth, const glm::mat4& portal1_matrix, const glm::mat4& portal2_matrix, const glm::mat4& m12, const glm::mat4& m21) {
+    if(depth > max_depth) return;
+    //화면 지우기
+
+    portalManager.draw_stencil(depth, portal1_matrix, portal2_matrix);
+
+    // portal 1 내부 그리기
+    glEnable(GL_CLIP_DISTANCE0);
+
+    auto temp1 = portalManager.portal1_camera->position;
+    auto temp2 = portalManager.portal1_camera->direction;
+    auto temp3 = portalManager.portal1_camera->up;
+
+    glStencilFunc(GL_EQUAL, depth+1, 0xFF);
+    portalManager.portal1_camera->position = glm::vec3(m12 * glm::vec4(portalManager.portal2_camera->position, 1.0));
+    portalManager.portal1_camera->direction = glm::mat3(m12) * portalManager.portal2_camera->direction;
+    portalManager.portal1_camera->up = glm::mat3(m12) * portalManager.portal2_camera->up;
+    main_camera = portalManager.portal1_camera;
+
+    portalManager.setPortal1Clipping(portal1_matrix);
+
+    SceneNode::render();
+    
+    // portal 2 내부 그리기
+    glStencilFunc(GL_EQUAL, 128+depth+1, 0xFF);
+    portalManager.portal2_camera->position = glm::vec3(m21 * glm::vec4(temp1, 1.0));
+    portalManager.portal2_camera->direction = glm::mat3(m21) * temp2;
+    portalManager.portal2_camera->up = glm::mat3(m21) * temp3;
+    main_camera = portalManager.portal2_camera;
+
+    portalManager.setPortal2Clipping(portal2_matrix);
+
+    SceneNode::render();
+
+    glDisable(GL_CLIP_DISTANCE0);
+
+    render_recursive(depth+1, max_depth, portal1_matrix*m12, portal2_matrix*m21, m21, m12);
 }
 
 float qwerasdf = 0.0f;
@@ -192,8 +249,8 @@ void MainScene::update() {
     }
     */
    
-    portalManager.setPortal1(glm::vec3(500.0-0.1, qwerasdf, 0.0), glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-    portalManager.setPortal2(glm::vec3(0.0, 200.0, 500.0-0.1), glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, 1.0, 0.0));
+    portalManager.setPortal1(glm::vec3(500.0-10.1, 200.0+10.0, 200.0), glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+    portalManager.setPortal2(glm::vec3(200.0, 200.0, 500.0-10.1), glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, 1.0, 0.0));
     portalManager.update_camera(cameras[0]->position, cameras[0]->direction, cameras[0]->up);
 
     SceneNode::update();
