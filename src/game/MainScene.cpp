@@ -36,14 +36,12 @@ std::map<std::string, int> timerLock;
 
 // __________ MainScene __________
 
-MainScene::MainScene() : SceneNode("MainScene"), portalTest() {
+MainScene::MainScene() : SceneNode("MainScene") {
 
     std::shared_ptr<Node> node;
 
     //__________ Camera ___________
     cameras.push_back(std::make_shared<PersCameraNode>("Camera1", glm::vec3(-300.0, 200.0f, -300.0), glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0, 1.0, 00), 120.0f, 1.0f, 3000.0f, 1.0f));
-    cameras.push_back(portalTest.p1_camera);
-    cameras.push_back(portalTest.p2_camera);
     addChild(cameras[0]); //Camera push : WorldPersCamera(0)
     current_camera_num = 0;
     main_camera = cameras[current_camera_num];
@@ -57,93 +55,53 @@ MainScene::MainScene() : SceneNode("MainScene"), portalTest() {
     addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0, 500.0, -500.0), glm::angleAxis(float(glm::radians(90.0)), glm::vec3(1.0, 0.0, 0.0)), 500.0f, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_cobble"));
     addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0, 500.0, 500.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(1.0, 0.0, 0.0)), 500.0f, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_cobble"));
     
-    std::cout << "portalTest texture : " << portalTest.p1_texture << ", " << portalTest.p2_texture<< std::endl;
-    addChild(std::make_shared<ModelNode>("portal1", glm::vec3(499.0, 200.0, 0.0), glm::angleAxis(float(glm::radians(90.0)), glm::vec3(0.0, 1.0, 0.0))*glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(1.0, 0.0, 0.0)), 100.0f, glm::vec3(0.0, 1.0, 0.0), "p1_texture", ""));
-    addChild(std::make_shared<ModelNode>("portal2", glm::vec3(0.0, 200.0, 499.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(1.0, 0.0, 0.0)), 100.0f, glm::vec3(0.0, 1.0, 0.0), "p2_texture", ""));
-
     std::cout << "-- portal1 --" << std::endl;
     collectCollisions();
 }
 void MainScene::render() {
-    auto temp = main_camera;
-    glm::vec3 planeNormal;
-    glm::vec3 planePoint;
-    glm::vec4 clipPlane;
 
     extern GLFWwindow* window;
     int fbWidth, fbHeight;
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
     
-    glBindFramebuffer(GL_FRAMEBUFFER, portalTest.p1_FBO);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CLIP_DISTANCE0);
-    glViewport(0, 0, fbWidth / 2, fbHeight);
-    main_camera = cameras[1];
-    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        planeNormal = glm::vec3(0.0f, 0.0f, -1.0f);
-        planePoint  = glm::vec3(0.0f, 0.0f, 498.0f);
-        clipPlane = glm::vec4(planeNormal.x, planeNormal.y, planeNormal.z,
-                            -glm::dot(planeNormal, planePoint)  // D = -n·p
-        );
-        glUniform4fv(clipPlaneLoc, 1, glm::value_ptr(clipPlane));
-    SceneNode::render();
-    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, portalTest.p2_FBO);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CLIP_DISTANCE0);
-    glViewport(0, 0, fbWidth / 2, fbHeight);
-    main_camera = cameras[2];
-    glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        planeNormal = glm::vec3(-1.0f, 0.0f, 0.0f);
-        planePoint  = glm::vec3(498.0f, 0.0f, 0.0f);
-        clipPlane = glm::vec4(planeNormal.x, planeNormal.y, planeNormal.z,
-                            -glm::dot(planeNormal, planePoint)  // D = -n·p
-        );
-        glUniform4fv(clipPlaneLoc, 1, glm::value_ptr(clipPlane));
-    SceneNode::render();
-
-    main_camera = temp;
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    //화면 지우기
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_CLIP_DISTANCE0);
-    if(main_camera == cameras[0]) {
-    // Get actual framebuffer size for proper viewport
-    extern GLFWwindow* window;
-    int fbWidth, fbHeight;
-    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
-    glViewport(0, 0, fbWidth, fbHeight);
-        glm::vec3 planeNormal = glm::vec3(0.0f, 1.0f, 0.0f);
-        glm::vec3 planePoint  = glm::vec3(0.0f, -1.0f, 0.0f);
-        glm::vec4 clipPlane(planeNormal.x, planeNormal.y, planeNormal.z,
-                            -glm::dot(planeNormal, planePoint)  // D = -n·p
-        );
-        glUniform4fv(clipPlaneLoc, 1, glm::value_ptr(clipPlane));
-    }
-    else if(main_camera == cameras[2]) {
-    glViewport(0, 0, fbWidth / 2, fbHeight);
-        // 평면: point = (500,0,0), normal = (-1,0,0)
-        glm::vec3 planeNormal = glm::vec3(-1.0f, 0.0f, 0.0f);
-        glm::vec3 planePoint  = glm::vec3(498.0f, 0.0f, 0.0f);
-        glm::vec4 clipPlane(planeNormal.x, planeNormal.y, planeNormal.z,
-                            -glm::dot(planeNormal, planePoint)  // D = -n·p
-        );
-        glUniform4fv(clipPlaneLoc, 1, glm::value_ptr(clipPlane));
-    }
-    else if(main_camera == cameras[1]) {
-    glViewport(0, 0, fbWidth / 2, fbHeight);
-        // 평면: point = (500,0,0), normal = (-1,0,0)
-        glm::vec3 planeNormal = glm::vec3(0.0f, 0.0f, -1.0f);
-        glm::vec3 planePoint  = glm::vec3(0.0f, 0.0f, 498.0f);
-        glm::vec4 clipPlane(planeNormal.x, planeNormal.y, planeNormal.z,
-                            -glm::dot(planeNormal, planePoint)  // D = -n·p
-        );
-        glUniform4fv(clipPlaneLoc, 1, glm::value_ptr(clipPlane));
-    }
+    glStencilMask(0xFF);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+    // world render 
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glDepthMask(GL_TRUE);
+    glStencilMask(0x00);
+    glStencilFunc(GL_EQUAL, 0, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
     SceneNode::render();
+
+    // potal stencil 값 생성 및 깊이, 생각 초기화
+    portalManager.draw_stencil();
+
+    // portal 1 내부 그리기
+    std::shared_ptr<CameraNode> temp = main_camera;
+    glEnable(GL_CLIP_DISTANCE0);
+
+    glStencilFunc(GL_EQUAL, 1, 0xFF);
+    main_camera = portalManager.portal1_camera;
+
+    portalManager.setPortal1Clipping();
+
+    SceneNode::render();
+    
+    // portal 2 내부 그리기
+    glStencilFunc(GL_EQUAL, 2, 0xFF);
+    main_camera = portalManager.portal2_camera;
+
+    portalManager.setPortal2Clipping();
+
+    SceneNode::render();
+
+    glDisable(GL_CLIP_DISTANCE0);
+    main_camera = temp;
 }
 
 float qwerasdf = 0.0f;
@@ -152,8 +110,6 @@ void MainScene::update() {
     glUniform3f(pointLightLoc, 0.0, qwerasdf+100.0, 0.0); //임시
     qwerasdf += 5.0f;
     qwerasdf = qwerasdf > 500.0 ? qwerasdf-500.0 : qwerasdf;
-    
-    portalTest.update(cameras[0]->position);
 
     //std::cout << "mouse position : (" << xpos-200 << ", " << ypos-200 << ")" << std::endl;
     for (auto& [key, value] : timerLock) if(value > 0) value--;
@@ -235,6 +191,11 @@ void MainScene::update() {
         }
     }
     */
+   
+    portalManager.setPortal1(glm::vec3(500.0-0.1, qwerasdf, 0.0), glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+    portalManager.setPortal2(glm::vec3(0.0, 200.0, 500.0-0.1), glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, 1.0, 0.0));
+    portalManager.update_camera(cameras[0]->position, cameras[0]->direction, cameras[0]->up);
+
     SceneNode::update();
 }
 
@@ -253,117 +214,4 @@ void Test::update() {
 }
 void Test::render() {
     ObjectNode::render();
-}
-
-PortalTest::PortalTest() : ObjectNode("PortalTest", glm::vec3(0.0), glm::vec3(0.0, 0.0, 1.0)) {
-    //portal
-    portal1_position = glm::vec3(500, 200.0, 0.0);
-    portal1_direction = glm::vec3(-1.0, 0.0, 0.0);
-    portal1_up = glm::vec3(0.0, 1.0, 0.0);
-    
-    portal2_position = glm::vec3(0.0, 200.0, 500.0);
-    portal2_direction = glm::vec3(0.0, 0.0, -1.0);
-    portal2_up = glm::vec3(0.0, 1.0, 0.0);
-
-    p1_camera = std::make_shared<PersCameraNode>("p1", glm::vec3(300.0, 200.0f, 300.0), glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0, 1.0, 00), 120.0f, 1.0f, 3000.0f, 1.0f/2.0f);
-    p2_camera = std::make_shared<PersCameraNode>("p2", glm::vec3(300.0, 200.0f, 300.0), glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0, 1.0, 00), 120.0f, 1.0f, 3000.0f, 1.0f/2.0f);
-
-    // Get actual framebuffer size for portal textures
-    extern GLFWwindow* window;
-    int fbWidth, fbHeight;
-    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
-    
-    glGenTextures(1, &p1_texture);
-    glBindTexture(GL_TEXTURE_2D, p1_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fbWidth / 2, fbHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    
-    glGenTextures(1, &p2_texture);
-    glBindTexture(GL_TEXTURE_2D, p2_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fbWidth / 2, fbHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    
-    glGenFramebuffers(1, &p1_FBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, p1_FBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, p1_texture, 0);
-
-    glGenRenderbuffers(1, &p1_depthRBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, p1_depthRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, fbWidth / 2, fbHeight);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, p1_depthRBO);
-    
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
-    glGenFramebuffers(1, &p2_FBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, p2_FBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, p2_texture, 0);
-    
-    glGenRenderbuffers(1, &p2_depthRBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, p2_depthRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, fbWidth / 2, fbHeight);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, p2_depthRBO);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
-    // Register portal textures in ModelManager so they can be used by models
-    extern ModelManager modelManager;
-    modelManager.textures["p1_texture"] = p1_texture;
-    modelManager.textures["p2_texture"] = p2_texture;
-}
-
-void PortalTest::update(const glm::vec3& viewer_position) {
-    //protal
-    //portal local world -> 
-    glm::mat4 portal1World = glm::mat4(
-                                        glm::vec4(glm::cross(portal1_up, portal1_direction), 0.0f),
-                                        glm::vec4(portal1_up, 0.0f),
-                                        glm::vec4(portal1_direction, 0.0f),
-                                        glm::vec4(portal1_position, 1.0f)
-                                    );
-    //portal1World = glm::transpose(portal1World);
-    glm::mat4 portal1World_inverse = glm::inverse(portal1World);
-    //portal local world -> 
-    glm::mat4 portal2World = glm::mat4(
-                                        glm::vec4(glm::cross(portal2_up, portal2_direction), 0.0f),
-                                        glm::vec4(portal2_up, 0.0f),
-                                        glm::vec4(portal2_direction, 0.0f),
-                                        glm::vec4(portal2_position, 1.0f)
-                                    );
-    //portal2World = glm::transpose(portal2World);
-    glm::mat4 portal2World_inverse = glm::inverse(portal2World);
-    glm::mat4 flip180 = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0,1,0)); //y축 180 회전
-
-    p1_camera->position = glm::vec3(portal2World * flip180 * portal1World_inverse * glm::vec4(viewer_position, 1.0));
-    p2_camera->position = glm::vec3(portal1World * flip180 * portal2World_inverse * glm::vec4(viewer_position, 1.0));
-
-    p1_camera->direction = glm::normalize(portal2_position - p1_camera->position);
-    p2_camera->direction = glm::normalize(portal1_position - p2_camera->position);
-
-    p1_camera->up = glm::vec3(0.0, 1.0, 0.0);
-    p2_camera->up = glm::vec3(0.0, 1.0, 0.0);
-    
-    /*
-    std::cout << "-- portal1 --" << std::endl;
-    std::cout << "position : (" << portal1_position.x << ", " << portal1_position.y << ", "  << portal1_position.z << ")" << std::endl;
-    std::cout << "-------------" << std::endl;
-    std::cout << "-- portal2 --" << std::endl;
-    std::cout << "position : (" << portal2_position.x << ", " << portal2_position.y << ", "  << portal2_position.z << ")" << std::endl;
-    std::cout << "-------------" << std::endl;
-    std::cout << "-- p1_camera --" << std::endl;
-    std::cout << "position : (" << p1_camera->position.x << ", " << p1_camera->position.y << ", "  << p1_camera->position.z << ")" << std::endl;
-    std::cout << "direciton : (" << p1_camera->direction.x << ", " << p1_camera->direction.y << ", "  << p1_camera->direction.z << ")" << std::endl;
-    std::cout << "-------------" << std::endl;
-    std::cout << "-- p2_camera --" << std::endl;
-    std::cout << "position : (" << p2_camera->position.x << ", " << p2_camera->position.y << ", "  << p2_camera->position.z << ")" << std::endl;
-    std::cout << "direciton : (" << p2_camera->direction.x << ", " << p2_camera->direction.y << ", "  << p2_camera->direction.z << ")" << std::endl;
-    std::cout << "-------------" << std::endl;
-    */
 }

@@ -151,6 +151,7 @@ int main(int argc, char** argv) {
         glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST);
     glEnable(GL_BLEND);
 
     shaderProgram = make_shader(&vertexShaderSource, &fragmentShaderSource);
