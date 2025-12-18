@@ -1,0 +1,341 @@
+#include "MainScene.h"
+
+#include <map>
+
+#include <GL/glew.h>
+#include <GL/freeglut.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/constants.hpp>
+#include <random>
+#include <stack>
+
+std::random_device rd; 
+std::mt19937 gen(rd());
+std::uniform_int_distribution<int> dist(1, 4);
+std::normal_distribution<float> distf(-1.0f, 1.0f);
+
+extern std::map<unsigned char, bool> keyState;
+extern std::map<int, bool> SpecialkeyState;
+extern std::map<unsigned char, bool> prevkeyState;
+extern std::map<int, bool> prevSpecialkeyState;
+extern int xpos; 
+extern int ypos;
+extern int render_mode;
+extern bool render_collision;
+
+extern glm::mat4 model_matrix;
+extern std::stack<glm::mat4> stack_model_matrix;
+
+extern GLint pointLightLoc; //임시
+extern GLint clipPlaneLoc;
+
+std::map<std::string, int> timerLock;
+//0이면 사용할 수 있음, idle마다 1씩 감소
+
+
+
+
+class Ball : public ObjectNode {
+public:
+    glm::vec3 velocity; // 속도 벡터
+    float lifeTime;     
+
+    Ball(glm::vec3 pos, glm::vec3 dir) : ObjectNode("Ball", pos, dir) {
+        float speed = 10.0f; // 공의 이동 속도
+        velocity = glm::normalize(dir) * speed;
+        lifeTime = 200.0f;  
+
+        addChild(std::make_shared<ModelNode>("rice", glm::vec3(0.0), glm::vec3(0.0), 5.0f, glm::vec3(1.0, 0.0, 0.0), ""));
+    }
+
+    void update() override {
+        // 매 프레임마다 속도만큼 이동
+        position += velocity;
+
+        // 수명 감소
+        lifeTime -= 1.0f;
+        if (lifeTime < 0) {
+            destroy(); // 수명 다하면 삭제 (SceneNode::kill()에서 처리됨)
+        }
+
+        ObjectNode::update();
+    }
+
+    // 공이 무언가와 부딪혔을 때 호출됨
+    void attacked(ObjectNode* obj) override {
+        // 예: 벽이나 다른 물체에 닿으면 공 삭제
+        // destroy(); 
+        // std::cout << "공이 무언가에 맞았습니다!" << std::endl;
+    }
+};
+
+
+
+
+// __________ MainScene __________
+
+MainScene::MainScene() : SceneNode("MainScene") {
+    //portal
+    portal1_position = glm::vec3(500, 200.0, 0.0);
+    portal1_direction = glm::vec3(-1.0, 0.0, 0.0);
+    portal1_up = glm::vec3(0.0, 1.0, 0.0);
+    
+    portal2_position = glm::vec3(0.0, 200.0, 500.0);
+    portal2_direction = glm::vec3(0.0, 0.0, -1.0);
+    portal2_up = glm::vec3(0.0, 1.0, 0.0);
+
+    p1_camera = std::make_shared<PersCameraNode>("p1", glm::vec3(300.0, 200.0f, 300.0), glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0, 1.0, 00), 120.0f, 1.0f, 3000.0f);
+    p2_camera = std::make_shared<PersCameraNode>("p2", glm::vec3(300.0, 200.0f, 300.0), glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0, 1.0, 00), 120.0f, 1.0f, 3000.0f);
+
+    std::shared_ptr<Node> node;
+
+    //__________ Camera ___________
+    cameras.push_back(std::make_shared<PersCameraNode>("Camera1", glm::vec3(-300.0, 200.0f, -300.0), glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0, 1.0, 00), 120.0f, 1.0f, 3000.0f));
+    cameras.push_back(p1_camera);
+    cameras.push_back(p2_camera);
+    addChild(cameras[0]); //Camera push : WorldPersCamera(0)
+    current_camera_num = 0;
+    main_camera = cameras[current_camera_num];
+
+    node = std::make_shared<Test>();
+    addChild(node); node = nullptr;
+
+    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0), glm::angleAxis(float(glm::radians(0.0)), glm::vec3(0.0, 1.0, 0.0)), 500.0, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_industrial"));
+    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(500.0, 500.0, 0.0), glm::angleAxis(float(glm::radians(90.0)), glm::vec3(0.0, 0.0, 1.0)), 500.0, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_industrial"));
+    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(-500.0, 500.0, 0.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(0.0, 0.0, 1.0)), 500.0, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_industrial"));
+    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0, 500.0, -500.0), glm::angleAxis(float(glm::radians(90.0)), glm::vec3(1.0, 0.0, 0.0)), 500.0, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_industrial"));
+    addChild(std::make_shared<ModelNode>("repeating_plane", glm::vec3(0.0, 500.0, 500.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(1.0, 0.0, 0.0)), 500.0, glm::vec3(1.0, 1.0, 0.0), "diffuse_white", "normal_industrial"));
+
+    std::cout << "-- portal1 --" << std::endl;
+    collectCollisions();
+}
+void MainScene::render() {
+    SceneNode::render();
+}   
+
+float qwerasdf = 0.0f;
+void MainScene::update() {
+    //glUniform3f(pointLightLoc, qwerasdf, 500.0, qwerasdf); //임시
+    glUniform3f(pointLightLoc, 0.0, qwerasdf+100.0, 0.0); //임시
+    qwerasdf += 5.0f;
+    qwerasdf = qwerasdf > 500.0 ? qwerasdf-500.0 : qwerasdf;
+    
+    //protal
+    //portal local world -> 
+    glm::mat4 portal1World = glm::mat4(
+                                        glm::vec4(glm::cross(portal1_up, portal1_direction), 0.0f),
+                                        glm::vec4(portal1_up, 0.0f),
+                                        glm::vec4(portal1_direction, 0.0f),
+                                        glm::vec4(portal1_position, 1.0f)
+                                    );
+    //portal1World = glm::transpose(portal1World);
+    glm::mat4 portal1World_inverse = glm::inverse(portal1World);
+    //portal local world -> 
+    glm::mat4 portal2World = glm::mat4(
+                                        glm::vec4(glm::cross(portal2_up, portal2_direction), 0.0f),
+                                        glm::vec4(portal2_up, 0.0f),
+                                        glm::vec4(portal2_direction, 0.0f),
+                                        glm::vec4(portal2_position, 1.0f)
+                                    );
+    //portal2World = glm::transpose(portal2World);
+    glm::mat4 portal2World_inverse = glm::inverse(portal2World);
+    glm::mat4 flip180 = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0,1,0)); //y축 180 회전
+
+    p1_camera->position = glm::vec3(portal2World * flip180 * portal1World_inverse * glm::vec4(cameras[0]->position, 1.0));
+    p2_camera->position = glm::vec3(portal1World * flip180 * portal2World_inverse * glm::vec4(cameras[0]->position, 1.0));
+
+    p1_camera->direction = glm::normalize(portal2_position - p1_camera->position);
+    p2_camera->direction = glm::normalize(portal1_position - p2_camera->position);
+
+    p1_camera->up = glm::vec3(0.0, 1.0, 0.0);
+    p2_camera->up = glm::vec3(0.0, 1.0, 0.0);
+
+    std::cout << "-- portal1 --" << std::endl;
+    std::cout << "position : (" << portal1_position.x << ", " << portal1_position.y << ", "  << portal1_position.z << ")" << std::endl;
+    std::cout << "-------------" << std::endl;
+    std::cout << "-- portal2 --" << std::endl;
+    std::cout << "position : (" << portal2_position.x << ", " << portal2_position.y << ", "  << portal2_position.z << ")" << std::endl;
+    std::cout << "-------------" << std::endl;
+    std::cout << "-- p1_camera --" << std::endl;
+    std::cout << "position : (" << p1_camera->position.x << ", " << p1_camera->position.y << ", "  << p1_camera->position.z << ")" << std::endl;
+    std::cout << "direciton : (" << p1_camera->direction.x << ", " << p1_camera->direction.y << ", "  << p1_camera->direction.z << ")" << std::endl;
+    std::cout << "-------------" << std::endl;
+    std::cout << "-- p2_camera --" << std::endl;
+    std::cout << "position : (" << p2_camera->position.x << ", " << p2_camera->position.y << ", "  << p2_camera->position.z << ")" << std::endl;
+    std::cout << "direciton : (" << p2_camera->direction.x << ", " << p2_camera->direction.y << ", "  << p2_camera->direction.z << ")" << std::endl;
+    std::cout << "-------------" << std::endl;
+    
+    glEnable(GL_CLIP_DISTANCE0);
+    if(main_camera == cameras[0]) {
+        glm::vec3 planeNormal = glm::vec3(0.0f, 1.0f, 0.0f);
+        glm::vec3 planePoint  = glm::vec3(0.0f, -1.0f, 0.0f);
+        glm::vec4 clipPlane(planeNormal.x, planeNormal.y, planeNormal.z,
+                            -glm::dot(planeNormal, planePoint)  // D = -n·p
+        );
+        glUniform4fv(clipPlaneLoc, 1, glm::value_ptr(clipPlane));
+    }
+    else if(main_camera == cameras[2]) {
+        // 평면: point = (500,0,0), normal = (-1,0,0)
+        glm::vec3 planeNormal = glm::vec3(-1.0f, 0.0f, 0.0f);
+        glm::vec3 planePoint  = glm::vec3(499.0f, 0.0f, 0.0f);
+        glm::vec4 clipPlane(planeNormal.x, planeNormal.y, planeNormal.z,
+                            -glm::dot(planeNormal, planePoint)  // D = -n·p
+        );
+        glUniform4fv(clipPlaneLoc, 1, glm::value_ptr(clipPlane));
+    }
+    else if(main_camera == cameras[1]) {
+        // 평면: point = (500,0,0), normal = (-1,0,0)
+        glm::vec3 planeNormal = glm::vec3(0.0f, 0.0f, -1.0f);
+        glm::vec3 planePoint  = glm::vec3(0.0f, 0.0f, 499.0f);
+        glm::vec4 clipPlane(planeNormal.x, planeNormal.y, planeNormal.z,
+                            -glm::dot(planeNormal, planePoint)  // D = -n·p
+        );
+        glUniform4fv(clipPlaneLoc, 1, glm::value_ptr(clipPlane));
+    }
+
+    std::cout << "mouse position : (" << xpos-200 << ", " << ypos-200 << ")" << std::endl;
+    for (auto& [key, value] : timerLock) if(value > 0) value--;
+    time++;
+    
+    //Camera change
+    if( (!prevkeyState['q'] && keyState['q']) || (!prevkeyState['Q'] && keyState['Q'])) {
+        current_camera_num = (current_camera_num+1)%cameras.size();
+        main_camera = cameras[current_camera_num];
+        std::cout << "Camera changed : " << main_camera->name << std::endl;
+    }
+
+    //Render change
+    if( (!prevkeyState['w'] && keyState['w']) || (!prevkeyState['W'] && keyState['W'])) {
+        render_mode++;
+        std::cout << "Render mode changed" << std::endl;
+    }
+
+    //Collision render option
+    if( (!prevkeyState['e'] && keyState['e']) || (!prevkeyState['E'] && keyState['E'])) {
+        render_collision = !render_collision;
+        if(render_collision)
+            std::cout << "Collision render activated" << std::endl;
+        else
+            std::cout << "Collision render deactivated" << std::endl;
+    }
+
+
+
+    if ((keyState['h'] || keyState['H']) && timerLock["shoot"] <= 0) {
+
+        timerLock["shoot"] = 10; // 쿨타임 설정
+
+        // 1. 발사 위치: 카메라 위치
+        glm::vec3 spawnPos = main_camera->position;
+
+        // 2. 발사 방향: 카메라가 보는 방향
+        glm::vec3 spawnDir = main_camera->direction;
+
+        // 3. 공 생성 (카메라보다 아주 살짝 앞에서 생성하여 시야 가림 방지)
+        std::shared_ptr<Ball> newBall = std::make_shared<Ball>(spawnPos + spawnDir * 10.0f, spawnDir);
+
+        // 4. 씬(Scene)에 추가해야 업데이트/렌더링이 됨
+        addChild(newBall);
+
+        std::cout << "공 발사!" << std::endl;
+    }
+
+
+
+
+
+
+    //Main camera move
+    if(keyState['i'] || keyState['I']) cameras[0]->position.x += 1.0;
+    if(keyState['k'] || keyState['K']) cameras[0]->position.x -= 1.0;
+    if(keyState['j'] || keyState['J']) cameras[0]->position.z -= 1.0;
+    if(keyState['l'] || keyState['L']) cameras[0]->position.z += 1.0;
+    if(main_camera == cameras[0]) {
+
+        float mapSize = 500.0f; // mapsize
+        float playerRadius = 10.0f; // 나중에 줄이거나 늘리거나
+        float limit = mapSize - playerRadius; //
+        bool isCollided = true;
+
+        // 1. X축 범위 제한 (Clamp)
+        if (main_camera->position.x > limit) {
+            main_camera->position.x = limit;
+            isCollided = true;
+        }
+        else if (main_camera->position.x < -limit) {
+            main_camera->position.x = -limit;
+            isCollided = true;
+        }
+
+        // 2. Z축 범위 제한 (Clamp)
+        if (main_camera->position.z > limit) {
+            main_camera->position.z = limit;
+            isCollided = true;
+        }
+        else if (main_camera->position.z < -limit) {
+            main_camera->position.z = -limit;
+            isCollided = true;
+        }
+
+        if (isCollided) {
+            std::cout << "!!! 충돌 (Collision) !!!" << std::endl;
+        }
+
+
+
+        if(xpos != 200 || ypos != 200) {
+            float delta_x = xpos - 200.0;
+            float delta_y = ypos - 200.0;
+            
+            float sensitivity = 0.002f;
+            glm::vec3 right = glm::normalize(glm::cross(main_camera->direction, main_camera->up));
+            glm::quat qYaw = glm::angleAxis(-delta_x * sensitivity, main_camera->up);
+            glm::quat qPitch = glm::angleAxis(-delta_y * sensitivity, right);
+            glm::quat q = qYaw * qPitch;
+
+            main_camera->direction = glm::normalize(q * main_camera->direction);
+        }
+    }
+    /*
+    if(main_camera == cameras[0]) {
+        if(keyState['u'] || keyState['U']) main_camera->position += 120.0f*main_camera->direction/60.0f;
+        if(keyState['o'] || keyState['O']) main_camera->position -= 120.0f*main_camera->direction/60.0f;
+        if(keyState['i'] || keyState['I']) main_camera->position += 120.0f*main_camera->up/60.0f;
+        if(keyState['k'] || keyState['K']) main_camera->position -= 120.0f*main_camera->up/60.0f;
+        if(keyState['j'] || keyState['J']) main_camera->position -= 120.0f*glm::cross(main_camera->direction, main_camera->up)/60.0f;
+        if(keyState['l'] || keyState['L']) main_camera->position += 120.0f*glm::cross(main_camera->direction, main_camera->up)/60.0f;
+        if(xpos != 200 || ypos != 200) {
+            float delta_x = xpos - 200.0;
+            float delta_y = ypos - 200.0;
+            
+            float sensitivity = 0.002f;
+            glm::vec3 right = glm::normalize(glm::cross(main_camera->direction, main_camera->up));
+            glm::quat qYaw = glm::angleAxis(-delta_x * sensitivity, main_camera->up);
+            glm::quat qPitch = glm::angleAxis(-delta_y * sensitivity, right);
+            glm::quat q = qYaw * qPitch;
+
+            main_camera->direction = glm::normalize(q * main_camera->direction);
+        }
+    }
+    */
+    SceneNode::update();
+}
+
+
+Test::Test() : ObjectNode("Test", glm::vec3(100.0, 100.0, 100.0), glm::vec3(0.0, 0.0, 1.0)) {
+    addChild(std::make_shared<ModelNode>("rice", glm::vec3(0.0), glm::angleAxis(float(glm::radians(-90.0)), glm::vec3(0.0, 1.0, 0.0)), 50.0, glm::vec3(1.0, 1.0, 0.0), "diffuse_rice", "normal_cobble"));
+}
+
+void Test::update() {
+    if(keyState['a'] || keyState['A']) rotation *= glm::angleAxis(0.03f, glm::vec3(1.0, 0.0, 0.0));
+    if(keyState['s'] || keyState['S']) rotation *= glm::angleAxis(-0.03f, glm::vec3(1.0, 0.0, 0.0));
+    if(keyState['z'] || keyState['Z']) rotation *= glm::angleAxis(0.03f, glm::vec3(0.0, 0.0, 1.0));
+    if(keyState['x'] || keyState['X']) rotation *= glm::angleAxis(-0.03f, glm::vec3(0.0, 0.0, 1.0));
+
+    ObjectNode::update();
+}
+void Test::render() {
+    ObjectNode::render();
+}
